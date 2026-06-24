@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Control de Rifa Premium con Nube</title>
+    <!-- Cargar Tailwind CSS para un diseño premium y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Fondo suave slate */
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Ocultar barra de desplazamiento para look de app nativa */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen pb-10">
+
+    <div class="max-w-4xl mx-auto px-4 pt-6">
+        
+        <!-- Encabezado Dinámico -->
+        <header class="text-center mb-6 relative">
+            <!-- Botón de Gestor de Rifas (Izquierda) -->
+            <button onclick="abrirManagerRifas()" class="absolute top-0 left-0 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-2.5 px-3 rounded-xl shadow-sm transition-all focus:outline-none flex items-center gap-1 text-xs sm:text-sm" title="Mis Rifas">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                <span class="hidden sm:inline">Mis Rifas</span>
+            </button>
+
+            <!-- Botón de Configuración de la Rifa Activa (Derecha) -->
+            <button onclick="abrirAjustes()" class="absolute top-0 right-0 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 p-2.5 rounded-xl shadow-sm transition-all focus:outline-none" title="Configuración de la Rifa">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+
+            <!-- Textos de Cabecera Dinámicos -->
+            <div class="mt-14 sm:mt-0">
+                <h1 id="header-title" class="text-2xl md:text-4xl font-extrabold text-slate-900 tracking-tight pr-12 pl-12 sm:px-16">💵 Rifa Súper Premium</h1>
+                <p id="header-subtitle" class="text-slate-500 mt-2 font-medium">Control de 100 números (Afl. 50)</p>
+                <p id="header-lottery" class="text-slate-400 mt-1 font-semibold text-sm">Sorteo con: Catochi Nocturno</p>
+                <p id="header-prize" class="text-emerald-600 mt-1 font-bold text-lg">Premio: Afl. 2,000 Cash 💵</p>
+            </div>
+        </header>
+
+        <!-- Barra de Estado de Sincronización en la Nube -->
+        <div id="sync-bar" class="mb-4 bg-slate-100 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+            <div class="flex items-center gap-2">
+                <span class="flex h-3.5 w-3.5 relative">
+                    <span id="sync-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+                    <span id="sync-dot" class="relative inline-flex rounded-full h-3.5 w-3.5 bg-slate-500"></span>
+                </span>
+                <span id="sync-text" class="font-semibold text-slate-600">Modo Local (Sin sincronización en la nube)</span>
+            </div>
+            <button id="btn-sync-now" onclick="forzarSincronizacion()" class="hidden bg-white hover:bg-slate-50 text-slate-700 font-bold py-1 px-3 rounded-lg border border-slate-200 text-xs shadow-sm transition-colors">
+                Sincronizar ahora 💵
+            </button>
+        </div>
+
+        <!-- Panel de Estadísticas -->
+        <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+            <!-- Libres -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 flex flex-col items-center justify-center border-b-4 border-b-slate-200">
+                <span class="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wide">Libres</span>
+                <span id="count-disp" class="text-2xl sm:text-3xl font-black text-slate-700">100</span>
+            </div>
+            <!-- Pendientes -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 flex flex-col items-center justify-center border-b-4 border-b-orange-400">
+                <span class="text-xs sm:text-sm font-semibold text-orange-500 uppercase tracking-wide font-bold">Deuda</span>
+                <span id="count-pend" class="text-2xl sm:text-3xl font-black text-orange-600">0</span>
+            </div>
+            <!-- Pagados -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 flex flex-col items-center justify-center border-b-4 border-b-green-500">
+                <span class="text-xs sm:text-sm font-semibold text-emerald-600 uppercase tracking-wide font-bold">Cash</span>
+                <span id="count-pag" class="text-2xl sm:text-3xl font-black text-emerald-500">0</span>
+            </div>
+        </div>
+
+        <!-- Filtros y Paginación (Se muestra dinámicamente según el tamaño de la rifa) -->
+        <div id="filter-container" class="mb-4 flex flex-col sm:flex-row gap-3 items-center justify-between bg-white border border-slate-100 p-4 rounded-xl shadow-sm hidden">
+            <!-- Buscador rápido -->
+            <div class="relative w-full sm:w-64">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </span>
+                <input type="text" id="search-number" oninput="filtrarNumeros()" placeholder="Buscar número..." class="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800">
+            </div>
+
+            <!-- Paginador para 1,000 números -->
+            <div id="pagination-pages" class="flex flex-wrap gap-1 justify-center">
+                <!-- Se inyecta por JS (ej: 0-199, 200-399, etc.) -->
+            </div>
+        </div>
+
+        <!-- Cuadrícula de Números -->
+        <div id="grid" class="grid grid-cols-5 sm:grid-cols-10 gap-2 sm:gap-3">
+            <!-- Cargado automáticamente por JS -->
+        </div>
+
+    </div>
+
+    <!-- Ventana Emergente: Participante -->
+    <div id="myModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all">
+            
+            <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-800">Número <span id="modal-title-num" class="text-blue-600">00</span></h2>
+                <button onclick="cerrarModal()" class="text-slate-400 hover:text-slate-700 focus:outline-none p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-6 max-h-[80vh] overflow-y-auto">
+                <input type="hidden" id="current-number">
+                
+                <!-- Nombre -->
+                <div class="mb-4">
+                    <label for="nombre" class="block text-sm font-semibold text-slate-600 mb-1">Nombre del Comprador</label>
+                    <input type="text" id="nombre" placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 placeholder-slate-400">
+                </div>
+
+                <!-- Teléfono (WhatsApp) -->
+                <div class="mb-4">
+                    <label for="telefono" class="block text-sm font-semibold text-slate-600 mb-1">Teléfono (WhatsApp)</label>
+                    <div class="flex gap-2">
+                        <div class="relative w-32 shrink-0">
+                            <select id="telefono-indicativo" onchange="toggleIndicativoPersonalizado()" class="w-full px-3 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 text-sm bg-white appearance-none pr-8">
+                                <option value="+297">🇦🇼 +297</option>
+                                <option value="+57">🇨🇴 +57</option>
+                                <option value="+58">🇻🇪 +58</option>
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+31">🇳🇱 +31</option>
+                                <option value="+599">🇨🇼 +599</option>
+                                <option value="+597">🇸🇷 +597</option>
+                                <option value="otro">Otro...</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                        </div>
+                        <!-- Campo de indicativo personalizado (oculto por defecto) -->
+                        <input type="text" id="telefono-indicativo-otro" placeholder="+code" class="hidden w-20 px-3 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 text-center placeholder-slate-400 font-bold">
+                        
+                        <input type="tel" id="telefono" oninput="actualizarVisibilidadWhatsapp()" placeholder="Número de celular" class="flex-1 px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 placeholder-slate-400">
+                    </div>
+                </div>
+
+                <!-- Dirección -->
+                <div class="mb-5">
+                    <label for="direccion" class="block text-sm font-semibold text-slate-600 mb-1">Dirección / Residencia</label>
+                    <input type="text" id="direccion" placeholder="Ej. Paradera 12-A, Aruba" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 placeholder-slate-400">
+                </div>
+                
+                <!-- Estado de Pago Checkbox -->
+                <div class="mb-6 flex items-center bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <input type="checkbox" id="pagado" class="w-6 h-6 text-emerald-500 rounded border-slate-300 focus:ring-emerald-500 accent-emerald-500">
+                    <label for="pagado" class="ml-3 font-semibold text-slate-700 cursor-pointer w-full">¿Ya pagó el número? 💵</label>
+                </div>
+                
+                <!-- Botones del Participante -->
+                <div class="flex flex-col gap-3">
+                    <button onclick="guardarDatos()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2">
+                        Guardar Cambios 💵
+                    </button>
+                    
+                    <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="hidden w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2">
+                        Enviar Recibo Directo 💸
+                    </button>
+
+                    <button onclick="confirmarLiberarNumero()" class="mt-2 text-red-500 hover:text-red-700 hover:bg-red-50 font-semibold py-2 px-4 rounded-lg transition-colors w-full">
+                        Eliminar / Liberar Número
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventana Emergente: Ajustes de la Rifa -->
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all">
+            
+            <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-800">Ajustes de la Rifa 💵</h2>
+                <button onclick="cerrarAjustes()" class="text-slate-400 hover:text-slate-700 focus:outline-none p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-6 max-h-[80vh] overflow-y-auto">
+                <!-- Título de la Rifa -->
+                <div class="mb-4">
+                    <label for="settings-title" class="block text-sm font-semibold text-slate-600 mb-1">Nombre/Título de la Rifa</label>
+                    <input type="text" id="settings-title" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800">
+                </div>
+
+                <!-- Cantidad de Números (Tamaño) -->
+                <div class="mb-4">
+                    <label for="settings-size" class="block text-sm font-semibold text-slate-600 mb-1">Cantidad de Números</label>
+                    <select id="settings-size" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800">
+                        <option value="50">50 números (del 00 al 49)</option>
+                        <option value="100">100 números (del 00 al 99)</option>
+                        <option value="1000">1,000 números (del 000 al 999)</option>
+                    </select>
+                </div>
+
+                <!-- Lotería con la que juega -->
+                <div class="mb-4">
+                    <label for="settings-lottery" class="block text-sm font-semibold text-slate-600 mb-1">Lotería con la que Juega</label>
+                    <input type="text" id="settings-lottery" placeholder="Ej. Catochi Nocturno" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800">
+                </div>
+
+                <!-- Tipo de Moneda -->
+                <div class="mb-4">
+                    <label for="settings-currency" class="block text-sm font-semibold text-slate-600 mb-1">Moneda / Divisa</label>
+                    <select id="settings-currency" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800">
+                        <option value="Afl.">Afl. (Florín de Aruba)</option>
+                        <option value="USD">USD ($ - Dólar Estadounidense)</option>
+                    </select>
+                </div>
+
+                <!-- Precio del Boleto -->
+                <div class="mb-4">
+                    <label for="settings-price" class="block text-sm font-semibold text-slate-600 mb-1">Precio por Número</label>
+                    <input type="number" id="settings-price" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800">
+                </div>
+
+                <!-- Valor del Premio -->
+                <div class="mb-4">
+                    <label for="settings-prize" class="block text-sm font-semibold text-slate-600 mb-1">Valor del Premio (Cash)</label>
+                    <input type="number" id="settings-prize" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800">
+                </div>
+
+                <!-- Código de Nube -->
+                <div class="mb-6 bg-blue-50 border border-blue-100 rounded-xl p-4">
+                    <label for="settings-sync-code" class="block text-sm font-bold text-blue-800 mb-1">Código de Rifa (Nube)</label>
+                    <input type="text" id="settings-sync-code" placeholder="Ej. rifa-premium-deiby" class="w-full px-4 py-3 rounded-lg border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 font-mono">
+                    <p class="text-xs text-blue-600 mt-2 font-medium">Usa este mismo código en todos tus dispositivos para compartir y vender sobre la misma lista en vivo.</p>
+                </div>
+
+                <!-- Botón de Guardar Ajustes -->
+                <button onclick="guardarAjustes()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2">
+                    Guardar y Sincronizar 💵
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventana Emergente: Gestor de Rifas -->
+    <div id="managerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl transform transition-all">
+            
+            <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-800">Gestor de Mis Rifas 📂</h2>
+                <button onclick="cerrarManagerRifas()" class="text-slate-400 hover:text-slate-700 focus:outline-none p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <!-- Lista de Rifas Creadas -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wide">Tus Rifas Activas</h3>
+                    <div id="raffles-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        <!-- Cargado dinámicamente -->
+                    </div>
+                </div>
+
+                <hr class="border-slate-100 my-4" />
+
+                <!-- Crear nueva Rifa rápido -->
+                <div>
+                    <h3 class="text-sm font-bold text-blue-600 mb-3 uppercase tracking-wide">Crear Nueva Rifa</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <input type="text" id="new-raffle-title" placeholder="Ej. Rifa de Cadena de Oro" class="w-full px-4 py-2 text-sm rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <select id="new-raffle-size" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="50">50 números</option>
+                                    <option value="100" selected>100 números</option>
+                                    <option value="1000">1,000 números</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select id="new-raffle-currency" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="Afl.">Afl. (Aruba)</option>
+                                    <option value="USD">USD ($)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="crearNuevaRifa()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm text-sm transition-all flex justify-center items-center gap-2">
+                            Crear Rifa Nueva 💵
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventana Emergente: Confirmación de Seguridad -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/80 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-xs overflow-hidden shadow-2xl p-6 text-center">
+            <div class="text-red-500 mb-3 flex justify-center">
+                <!-- Icono de Advertencia -->
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 id="confirm-title" class="text-lg font-bold text-slate-900 mb-2">¿Estás seguro?</h3>
+            <p id="confirm-text" class="text-sm text-slate-500 mb-6">Esta acción no se puede deshacer.</p>
+            <div class="flex gap-3">
+                <button onclick="cerrarConfirmacion()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-colors text-sm">
+                    Cancelar
+                </button>
+                <button id="confirm-yes-btn" class="w-1/2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">
+                    Sí, confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor para Notificaciones Flotantes (Toasts) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0"></div>
+
+    <script>
+        // Variables de estado principal (Soporte multirifa)
+        let appState = {
+            currentRaffleId: "",
+            raffles: {}
+        };
+
+        // Estado del visualizador de 1000 números
+        let pageStart = 0;
+        let pageSize = 200; // Bloques de visualización para 1000 números
+        let currentSearchQuery = "";
+
+        // URL del almacén en la nube
+        const cloudBucketURL = "https://kvdb.io/8x9zYv7pWq3r2sT1uN4bK6_deiby_raffles/";
+        let lastCloudSyncTime = 0;
+
+        // Carga y prepara el estado de la app
+        function inicializarDatos() {
+            const savedState = localStorage.getItem('rifaMultiAppState');
+            
+            if (savedState) {
+                appState = JSON.parse(savedState);
+            } else {
+                // Intentar migrar desde la estructura de versión única anterior
+                const oldSettings = localStorage.getItem('rifaSettings');
+                const oldData = localStorage.getItem('rifaDataPremiumCloud');
+                
+                const defaultId = "raffle-" + Date.now();
+                appState.currentRaffleId = defaultId;
+                appState.raffles[defaultId] = {
+                    id: defaultId,
+                    title: "Rifa Súper Premium",
+                    price: 50,
+                    prize: 2000,
+                    syncCode: "",
+                    lottery: "Catochi Nocturno (Lotto Aruba)",
+                    currency: "Afl.",
+                    size: 100,
+                    data: {}
+                };
+
+                // Si existen datos anteriores, migrarlos
+                if (oldSettings) {
+                    try {
+                        const parsedSettings = JSON.parse(oldSettings);
+                        appState.raffles[defaultId].title = parsedSettings.title || "Rifa Súper Premium";
+                        appState.raffles[defaultId].price = parsedSettings.price || 50;
+                        appState.raffles[defaultId].prize = parsedSettings.prize || 2000;
+                        appState.raffles[defaultId].syncCode = parsedSettings.syncCode || "";
+                        appState.raffles[defaultId].lottery = parsedSettings.lottery || "Catochi Nocturno (Lotto Aruba)";
+                        appState.raffles[defaultId].currency = parsedSettings.currency || "Afl.";
+                        appState.raffles[defaultId].size = parseInt(parsedSettings.size) || 100;
+                    } catch(e) { console.error("Error migrando settings", e); }
+                }
+
+                if (oldData) {
+                    try {
+                        appState.raffles[defaultId].data = JSON.parse(oldData);
+                    } catch(e) { console.error("Error migrando datos", e); }
+                } else {
+                    // Generar tablero en blanco si no hay datos
+                    appState.raffles[defaultId].data = crearTableroVacio(appState.raffles[defaultId].size);
+                }
+
+                guardarLocalmente();
+            }
+
+            // Validar que la rifa actual exista
+            if (!appState.currentRaffleId || !appState.raffles[appState.currentRaffleId]) {
+                const keys = Object.keys(appState.raffles);
+                if (keys.length > 0) {
+                    appState.currentRaffleId = keys[0];
+                } else {
+                    const defaultId = "raffle-" + Date.now();
+                    appState.currentRaffleId = defaultId;
+                    appState.raffles[defaultId] = {
+                        id: defaultId,
+                        title: "Rifa Súper Premium",
+                        price: 50,
+                        prize: 2000,
+                        syncCode: "",
+                        lottery: "Catochi Nocturno (Lotto Aruba)",
+                        currency: "Afl.",
+                        size: 100,
+                        data: crearTableroVacio(100)
+                    };
+                    guardarLocalmente();
+                }
+            }
+
+            actualizarVistaEncabezado();
+        }
+
+        // Crea una estructura de números vacíos
+        function crearTableroVacio(size) {
+            const data = {};
+            const padLen = size === 1000 ? 3 : 2;
+            for (let i = 0; i < size; i++) {
+                const num = String(i).padStart(padLen, '0');
+                data[num] = { nombre: "", telefono: "", direccion: "", pagado: false, reservado: false };
+            }
+            return data;
+        }
+
+        // Obtener la rifa activa actual
+        function getRifaActiva() {
+            return appState.raffles[appState.currentRaffleId];
+        }
+
+        // Guardar cambios del estado en local storage
+        function guardarLocalmente() {
+            localStorage.setItem('rifaMultiAppState', JSON.stringify(appState));
+        }
+
+        // Sincronizar la rifa activa con la base de datos en la nube
+        async function sincronizarConNube() {
+            const rifa = getRifaActiva();
+            if (!rifa.syncCode || rifa.syncCode.trim() === "") {
+                actualizarBarraSincronizacion("local");
+                return;
+            }
+
+            actualizarBarraSincronizacion("syncing");
+
+            const cleanCode = rifa.syncCode.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
+            const url = cloudBucketURL + cleanCode;
+
+            try {
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const cloudPayload = await response.json();
+                    
+                    if (cloudPayload && cloudPayload.data && cloudPayload.settings) {
+                        // Sincronizar ajustes y datos de esta rifa
+                        rifa.data = cloudPayload.data;
+                        rifa.title = cloudPayload.settings.title || rifa.title;
+                        rifa.price = cloudPayload.settings.price || rifa.price;
+                        rifa.prize = cloudPayload.settings.prize || rifa.prize;
+                        rifa.lottery = cloudPayload.settings.lottery || rifa.lottery;
+                        rifa.currency = cloudPayload.settings.currency || rifa.currency;
+                        
+                        // Si el tamaño cambió en la nube, adaptar de forma inteligente mapeando dígitos
+                        const oldSize = rifa.size;
+                        rifa.size = parseInt(cloudPayload.settings.size) || rifa.size;
+                        if (oldSize !== rifa.size) {
+                            const vData = crearTableroVacio(rifa.size);
+                            const newPadLen = rifa.size === 1000 ? 3 : 2;
+                            Object.keys(rifa.data).forEach(k => {
+                                const intVal = parseInt(k, 10);
+                                if (!isNaN(intVal)) {
+                                    const newKey = String(intVal).padStart(newPadLen, '0');
+                                    if (vData.hasOwnProperty(newKey)) {
+                                        vData[newKey] = rifa.data[k];
+                                    }
+                                }
+                            });
+                            rifa.data = vData;
+                        }
+
+                        guardarLocalmente();
+                        renderGrid();
+                        actualizarVistaEncabezado();
+                        actualizarBarraSincronizacion("connected");
+                        lastCloudSyncTime = Date.now();
+                    }
+                } else if (response.status === 404) {
+                    // Si el código no existe en la nube, subir el estado actual local
+                    await subirEstadoNube(url);
+                    actualizarBarraSincronizacion("connected");
+                    lastCloudSyncTime = Date.now();
+                } else {
+                    throw new Error("Respuesta inválida del servidor");
+                }
+            } catch (error) {
+                console.error("Error al sincronizar con la nube:", error);
+                actualizarBarraSincronizacion("error");
+                showToast("Fallo de conexión. Operando en modo local temporalmente 💸", "error");
+            }
+        }
+
+        // Sube el estado actual a la nube
+        async function subirEstadoNube(url) {
+            const rifa = getRifaActiva();
+            if (!rifa.syncCode || rifa.syncCode.trim() === "") return;
+            const targetUrl = url || (cloudBucketURL + rifa.syncCode.trim().toLowerCase().replace(/[^a-z0-9-_]/g, ''));
+
+            const payload = {
+                settings: {
+                    title: rifa.title,
+                    price: rifa.price,
+                    prize: rifa.prize,
+                    lottery: rifa.lottery,
+                    currency: rifa.currency,
+                    size: rifa.size
+                },
+                data: rifa.data,
+                timestamp: Date.now()
+            };
+
+            try {
+                const response = await fetch(targetUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error("No se pudo guardar en la nube");
+            } catch (error) {
+                console.error("Error al subir estado:", error);
+                showToast("Cambios guardados localmente pero no en la nube 💸", "error");
+            }
+        }
+
+        // Fuerza una sincronización manual
+        function forzarSincronizacion() {
+            sincronizarConNube();
+            showToast("Buscando actualizaciones en la nube... 💵", "info");
+        }
+
+        // Renderizar el tablero numérico adaptativo
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            const rifa = getRifaActiva();
+            const filterContainer = document.getElementById('filter-container');
+            const searchInput = document.getElementById('search-number');
+
+            let disp = 0;
+            let pend = 0;
+            let pag = 0;
+
+            // Calcular contadores generales de toda la rifa activa
+            Object.keys(rifa.data).forEach(key => {
+                const item = rifa.data[key];
+                if (item.pagado) pag++;
+                else if (item.reservado) pend++;
+                else disp++;
+            });
+
+            // Configurar el sistema de paginación/búsqueda para 1000 números
+            if (rifa.size === 1000) {
+                filterContainer.classList.remove('hidden');
+                configurarPaginacion1000();
+            } else {
+                filterContainer.classList.add('hidden');
+                currentSearchQuery = "";
+                if (searchInput) searchInput.value = "";
+            }
+
+            // Obtener el listado filtrado de números a mostrar
+            const totalNumeros = rifa.size;
+            const padLen = totalNumeros === 1000 ? 3 : 2;
+
+            for (let i = 0; i < totalNumeros; i++) {
+                const num = String(i).padStart(padLen, '0');
+                const data = rifa.data[num] || { nombre: "", telefono: "", direccion: "", pagado: false, reservado: false };
+
+                // Si es de tamaño 1000, aplicar filtros de paginación y buscador
+                if (totalNumeros === 1000) {
+                    const matchesSearch = num.includes(currentSearchQuery) || (data.nombre && data.nombre.toLowerCase().includes(currentSearchQuery.toLowerCase()));
+                    
+                    if (currentSearchQuery === "") {
+                        // Si no hay búsqueda, filtrar por bloque de página
+                        if (i < pageStart || i >= (pageStart + pageSize)) {
+                            continue;
+                        }
+                    } else {
+                        // Si hay búsqueda, omitir si no coincide
+                        if (!matchesSearch) continue;
+                    }
+                }
+
+                // Crear botón de número
+                const btn = document.createElement('button');
+                btn.onclick = () => abrirModal(num);
+                btn.className = 'relative flex flex-col items-center justify-center p-1 rounded-xl shadow-sm border font-bold transition-all transform hover:-translate-y-1 hover:shadow-md h-16 sm:h-20 select-none';
+
+                if (data.pagado) {
+                    btn.classList.add('bg-emerald-500', 'text-white', 'border-emerald-600', 'shadow-emerald-200');
+                    btn.innerHTML = `<span class="text-xl sm:text-2xl">💵 ${num}</span><span class="text-[9px] sm:text-[11px] font-semibold truncate w-full px-1">${data.nombre}</span>`;
+                } else if (data.reservado) {
+                    btn.classList.add('bg-orange-400', 'text-white', 'border-orange-500', 'shadow-orange-200');
+                    btn.innerHTML = `<span class="text-xl sm:text-2xl">💸 ${num}</span><span class="text-[9px] sm:text-[11px] font-semibold truncate w-full px-1">${data.nombre}</span>`;
+                } else {
+                    btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200', 'hover:bg-slate-50');
+                    btn.innerHTML = `<span class="text-xl sm:text-2xl">${num}</span>`;
+                }
+
+                grid.appendChild(btn);
+            }
+
+            // Actualizar contadores en la vista
+            document.getElementById('count-disp').innerText = disp;
+            document.getElementById('count-pend').innerText = pend;
+            document.getElementById('count-pag').innerText = pag;
+        }
+
+        // Generar botones de páginas para rifas de 1000
+        function configurarPaginacion1000() {
+            const pagContainer = document.getElementById('pagination-pages');
+            pagContainer.innerHTML = '';
+
+            // Solo mostrar páginas si no hay búsqueda activa
+            if (currentSearchQuery !== "") {
+                pagContainer.innerHTML = `<span class="text-xs text-slate-500 italic">Resultados de búsqueda</span>`;
+                return;
+            }
+
+            const ranges = [
+                { start: 0, label: "000-199" },
+                { start: 200, label: "200-399" },
+                { start: 400, label: "400-599" },
+                { start: 600, label: "600-799" },
+                { start: 800, label: "800-999" }
+            ];
+
+            ranges.forEach(range => {
+                const btn = document.createElement('button');
+                btn.innerText = range.label;
+                btn.onclick = () => {
+                    pageStart = range.start;
+                    renderGrid();
+                };
+                
+                if (pageStart === range.start) {
+                    btn.className = "bg-blue-600 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg shadow-sm";
+                } else {
+                    btn.className = "bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1.5 rounded-lg transition-colors";
+                }
+                pagContainer.appendChild(btn);
+            });
+        }
+
+        // Filtrar números a través del input de búsqueda
+        function filtrarNumeros() {
+            const searchInput = document.getElementById('search-number');
+            currentSearchQuery = searchInput.value.trim();
+            renderGrid();
+        }
+
+        // Permite alternar la visibilidad del campo para indicativo personalizado
+        function toggleIndicativoPersonalizado() {
+            const select = document.getElementById('telefono-indicativo');
+            const inputOtro = document.getElementById('telefono-indicativo-otro');
+            if (select.value === "otro") {
+                inputOtro.classList.remove('hidden');
+                inputOtro.value = "+";
+                inputOtro.focus();
+            } else {
+                inputOtro.classList.add('hidden');
+            }
+        }
+
+        // Abrir modal de detalles del participante
+        function abrirModal(num) {
+            const rifa = getRifaActiva();
+            const data = rifa.data[num] || { nombre: "", telefono: "", direccion: "", pagado: false, reservado: false };
+            
+            document.getElementById('modal-title-num').innerText = num;
+            document.getElementById('current-number').value = num;
+            document.getElementById('nombre').value = data.nombre || "";
+            document.getElementById('direccion').value = data.direccion || "";
+            document.getElementById('pagado').checked = data.pagado || false;
+            
+            // Parsear el teléfono guardado y su indicativo de manera inteligente
+            let telGuardado = data.telefono || "";
+            const indicativoSel = document.getElementById('telefono-indicativo');
+            const indicativoOtro = document.getElementById('telefono-indicativo-otro');
+            const inputTel = document.getElementById('telefono');
+            
+            if (telGuardado.startsWith("+")) {
+                // El número ya tiene formato internacional con prefijo
+                const opciones = Array.from(indicativoSel.options).map(o => o.value);
+                let coincidencia = "";
+                for (let op of opciones) {
+                    if (op !== "otro" && telGuardado.startsWith(op)) {
+                        if (op.length > coincidencia.length) {
+                            coincidencia = op;
+                        }
+                    }
+                }
+                
+                if (coincidencia !== "") {
+                    indicativoSel.value = coincidencia;
+                    indicativoOtro.classList.add('hidden');
+                    inputTel.value = telGuardado.substring(coincidencia.length).trim();
+                } else {
+                    // Es un indicativo personalizado de otro país
+                    indicativoSel.value = "otro";
+                    indicativoOtro.classList.remove('hidden');
+                    const match = telGuardado.match(/^\+(\d+)/);
+                    if (match) {
+                        const fullPrefix = "+" + match[1];
+                        indicativoOtro.value = fullPrefix;
+                        inputTel.value = telGuardado.substring(fullPrefix.length).trim();
+                    } else {
+                        indicativoOtro.value = "+";
+                        inputTel.value = telGuardado;
+                    }
+                }
+            } else {
+                // Si no tiene prefijo, es formato viejo (asumimos Aruba +297 de manera retrocompatible)
+                indicativoSel.value = "+297";
+                indicativoOtro.classList.add('hidden');
+                inputTel.value = telGuardado;
+            }
+            
+            // Mostrar botón de WhatsApp solo si ya tiene un nombre asignado
+            const btnWhatsapp = document.getElementById('btn-whatsapp');
+            if (data.reservado && data.nombre.trim() !== "") {
+                btnWhatsapp.classList.remove('hidden');
+            } else {
+                btnWhatsapp.classList.add('hidden');
+            }
+
+            const modal = document.getElementById('myModal');
+            modal.classList.remove('hidden');
+            
+            setTimeout(() => { document.getElementById('nombre').focus(); }, 100);
+        }
+
+        function cerrarModal() {
+            document.getElementById('myModal').classList.add('hidden');
+        }
+
+        // Guardar cambios del comprador
+        async function guardarDatos() {
+            const rifa = getRifaActiva();
+            const num = document.getElementById('current-number').value;
+            const nombre = document.getElementById('nombre').value.trim();
+            
+            // Obtener el teléfono completo con su respectivo indicativo
+            const selectIndicativo = document.getElementById('telefono-indicativo').value;
+            const inputOtro = document.getElementById('telefono-indicativo-otro').value.trim();
+            const inputTel = document.getElementById('telefono').value.trim();
+            const direccion = document.getElementById('direccion').value.trim();
+            const pagado = document.getElementById('pagado').checked;
+
+            if (nombre === "") {
+                const inputNombre = document.getElementById('nombre');
+                inputNombre.classList.add('border-red-500', 'ring-red-200', 'ring-2');
+                setTimeout(() => inputNombre.classList.remove('border-red-500', 'ring-red-200', 'ring-2'), 1000);
+                showToast("Por favor, ingresa el nombre del comprador 💸", "error");
+                return;
+            }
+
+            // Construir teléfono con su indicativo
+            let prefijo = selectIndicativo;
+            if (selectIndicativo === "otro") {
+                prefijo = inputOtro.startsWith("+") ? inputOtro : "+" + inputOtro;
+                if (prefijo === "+") prefijo = "";
+            }
+            
+            let telLimpio = inputTel.replace(/[^0-9]/g, '');
+            let telefonoCompleto = telLimpio !== "" ? (prefijo + telLimpio) : "";
+
+            rifa.data[num] = {
+                nombre: nombre,
+                telefono: telefonoCompleto,
+                direccion: direccion,
+                pagado: pagado,
+                reservado: true
+            };
+
+            guardarLocalmente();
+            renderGrid();
+            cerrarModal();
+            showToast(`Número ${num} guardado con éxito 💵`, "success");
+
+            // Subir automáticamente a la nube si tiene código
+            if (rifa.syncCode && rifa.syncCode.trim() !== "") {
+                actualizarBarraSincronizacion("syncing");
+                await subirEstadoNube();
+                actualizarBarraSincronizacion("connected");
+            }
+        }
+
+        // Llamar confirmación de liberación
+        function confirmarLiberarNumero() {
+            const num = document.getElementById('current-number').value;
+            mostrarConfirmacion(
+                `¿Liberar número ${num}?`,
+                "Se borrarán todos los datos del comprador registrados en este número.",
+                async () => {
+                    cerrarConfirmacion();
+                    await ejecutarLiberacion(num);
+                }
+            );
+        }
+
+        // Borrar el registro de un número
+        async function ejecutarLiberacion(num) {
+            const rifa = getRifaActiva();
+            rifa.data[num] = { nombre: "", telefono: "", direccion: "", pagado: false, reservado: false };
+            
+            guardarLocalmente();
+            renderGrid();
+            cerrarModal();
+            showToast(`Número ${num} ha sido liberado 💸`, "info");
+
+            if (rifa.syncCode && rifa.syncCode.trim() !== "") {
+                actualizarBarraSincronizacion("syncing");
+                await subirEstadoNube();
+                actualizarBarraSincronizacion("connected");
+            }
+        }
+
+        // Enviar recibo por WhatsApp guardando automáticamente los cambios vigentes
+        async function enviarWhatsApp() {
+            const rifa = getRifaActiva();
+            const num = document.getElementById('current-number').value;
+            const nombre = document.getElementById('nombre').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const direccion = document.getElementById('direccion').value.trim();
+            const pagado = document.getElementById('pagado').checked;
+
+            if (nombre === "") {
+                showToast("Por favor, ingresa el nombre para enviar el recibo 💸", "error");
+                return;
+            }
+
+            // Guardar cambios automáticamente antes de enviar para evitar enviar datos antiguos
+            rifa.data[num] = {
+                nombre: nombre,
+                telefono: telefono,
+                direccion: direccion,
+                pagado: pagado,
+                reservado: true
+            };
+
+            guardarLocalmente();
+            renderGrid();
+
+            const estadoPago = pagado ? "💵 PAGADO 💵" : "💸 PENDIENTE DE PAGO 💸";
+            const cur = rifa.currency || "Afl.";
+            const lot = rifa.lottery || "Catochi Nocturno (Lotto Aruba)";
+            
+            // Construcción del mensaje exclusivo con emojis de billetes
+            let texto = `💵💵💵 RECIBO DE RIFA DIGITAL 💵💵💵\n\n`;
+            texto += `💵 Participante: *${nombre}*\n`;
+            texto += `💵 Número reservado: *${num}*\n`;
+            texto += `💵 Valor del ticket: *${cur} ${rifa.price}*\n`;
+            texto += `💵 Sorteo con: *${lot}*\n`;
+            texto += `💵 Premio en juego: *${cur} ${rifa.prize} Cash*\n\n`;
+            texto += `💵 Estado del boleto: *${estadoPago}*\n`;
+            
+            if (direccion !== "") {
+                texto += `💵 Dirección registrada: *${direccion}*\n`;
+            }
+            texto += `\n`;
+            
+            if (!pagado) {
+                texto += `💸 Recuerda completar tu pago de *${cur} ${rifa.price},-* para asegurar que tu número participe en el sorteo. 💸\n\n`;
+            } else {
+                texto += `💵 ¡Tu participación está confirmada! Te deseamos la mayor de las suertes en el sorteo. 💵\n\n`;
+            }
+            
+            texto += `💵💵💵 ¡Gracias por participar! 💵💵💵`;
+
+            // Formateo del teléfono
+            let telLimpio = telefono.replace(/\D/g, ''); 
+            
+            // Si el número tiene 7 dígitos (formato estándar de Aruba), anexar el prefijo +297
+            if (telLimpio.length === 7) {
+                telLimpio = "297" + telLimpio;
+            }
+
+            const mensajeCodificado = encodeURIComponent(texto);
+            
+            // Abrir WhatsApp con el número del cliente
+            if (telLimpio.trim() !== "") {
+                window.open(`https://wa.me/${telLimpio}?text=${mensajeCodificado}`, '_blank');
+            } else {
+                window.open(`https://wa.me/?text=${mensajeCodificado}`, '_blank');
+            }
+
+            cerrarModal();
+
+            // Subir a la nube en segundo plano
+            if (rifa.syncCode && rifa.syncCode.trim() !== "") {
+                actualizarBarraSincronizacion("syncing");
+                await subirEstadoNube();
+                actualizarBarraSincronizacion("connected");
+            }
+        }
+
+        // Abrir Ajustes de Rifa
+        function abrirAjustes() {
+            const rifa = getRifaActiva();
+            document.getElementById('settings-title').value = rifa.title;
+            document.getElementById('settings-size').value = rifa.size;
+            document.getElementById('settings-price').value = rifa.price;
+            document.getElementById('settings-prize').value = rifa.prize;
+            document.getElementById('settings-sync-code').value = rifa.syncCode || "";
+            document.getElementById('settings-lottery').value = rifa.lottery || "Catochi Nocturno (Lotto Aruba)";
+            document.getElementById('settings-currency').value = rifa.currency || "Afl.";
+
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function cerrarAjustes() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        // Guardar ajustes principales de la rifa activa
+        async function guardarAjustes() {
+            const rifa = getRifaActiva();
+            const nuevoTitulo = document.getElementById('settings-title').value.trim();
+            const nuevoTamaño = parseInt(document.getElementById('settings-size').value) || 100;
+            const nuevoPrecio = parseInt(document.getElementById('settings-price').value) || 50;
+            const nuevoPremio = parseInt(document.getElementById('settings-prize').value) || 2000;
+            const nuevoCodigo = document.getElementById('settings-sync-code').value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
+            const nuevaLoteria = document.getElementById('settings-lottery').value.trim() || "Catochi Nocturno (Lotto Aruba)";
+            const nuevaMoneda = document.getElementById('settings-currency').value;
+
+            const cambioDeCodigo = (rifa.syncCode !== nuevoCodigo);
+            const cambioDeTamaño = (rifa.size !== nuevoTamaño);
+
+            // Si cambia el tamaño, confirmar antes de modificar para evitar pérdidas accidentales
+            if (cambioDeTamaño) {
+                mostrarConfirmacion(
+                    "¿Cambiar tamaño de rifa?",
+                    "Si reduces el tamaño, se podrían ocultar o eliminar números que estén fuera del nuevo rango. ¿Proceder?",
+                    async () => {
+                        cerrarConfirmacion();
+                        ejecutarCambioAjustes(nuevoTamaño, nuevoTitulo, nuevoPrecio, nuevoPremio, nuevoCodigo, nuevaLoteria, nuevaMoneda, cambioDeCodigo);
+                    }
+                );
+            } else {
+                ejecutarCambioAjustes(nuevoTamaño, nuevoTitulo, nuevoPrecio, nuevoPremio, nuevoCodigo, nuevaLoteria, nuevaMoneda, cambioDeCodigo);
+            }
+        }
+
+        // Aplicar los ajustes guardados de la rifa adaptando dinámicamente los tamaños
+        async function ejecutarCambioAjustes(nuevoTamaño, nuevoTitulo, nuevoPrecio, nuevoPremio, nuevoCodigo, nuevaLoteria, nuevaMoneda, cambioDeCodigo) {
+            const rifa = getRifaActiva();
+
+            // Adaptar estructura si cambió de tamaño mapeando dígitos de forma inteligente (de 2 a 3 dígitos o viceversa)
+            if (rifa.size !== nuevoTamaño) {
+                const viejoData = rifa.data;
+                rifa.size = nuevoTamaño;
+                rifa.data = crearTableroVacio(nuevoTamaño);
+                const newPadLen = nuevoTamaño === 1000 ? 3 : 2;
+                
+                Object.keys(viejoData).forEach(k => {
+                    const intVal = parseInt(k, 10);
+                    if (!isNaN(intVal)) {
+                        const newKey = String(intVal).padStart(newPadLen, '0');
+                        if (rifa.data.hasOwnProperty(newKey)) {
+                            rifa.data[newKey] = viejoData[k];
+                        }
+                    }
+                });
+            }
+
+            rifa.title = nuevoTitulo !== "" ? nuevoTitulo : "Rifa Súper Premium";
+            rifa.price = nuevoPrecio;
+            rifa.prize = nuevoPremio;
+            rifa.syncCode = nuevoCodigo;
+            rifa.lottery = nuevaLoteria;
+            rifa.currency = nuevaMoneda;
+
+            guardarLocalmente();
+            actualizarVistaEncabezado();
+            cerrarAjustes();
+            renderGrid();
+            showToast("Ajustes de la rifa actualizados 💵", "success");
+
+            if (cambioDeCodigo) {
+                if (nuevoCodigo !== "") {
+                    showToast(`Conectando con código de nube: ${nuevoCodigo} 💵`, "info");
+                    sincronizarConNube();
+                } else {
+                    actualizarBarraSincronizacion("local");
+                    showToast("Desconectado de la nube. Modo local activado 💸", "info");
+                }
+            } else if (rifa.syncCode !== "") {
+                actualizarBarraSincronizacion("syncing");
+                await subirEstadoNube();
+                actualizarBarraSincronizacion("connected");
+            }
+        }
+
+        // Actualiza el texto de cabecera dinámicamente
+        function actualizarVistaEncabezado() {
+            const rifa = getRifaActiva();
+            const cur = rifa.currency || "Afl.";
+            document.getElementById('header-title').innerText = "💵 " + rifa.title;
+            document.getElementById('header-subtitle').innerText = `Control de ${rifa.size} números (${cur} ${rifa.price})`;
+            document.getElementById('header-lottery').innerText = `Sorteo con: ${rifa.lottery}`;
+            document.getElementById('header-prize').innerText = `Premio: ${cur} ${rifa.prize} Cash 💵`;
+        }
+
+        // Abrir panel administrador de múltiples rifas
+        function abrirManagerRifas() {
+            actualizarListaManagerRifas();
+            document.getElementById('managerModal').classList.remove('hidden');
+        }
+
+        function cerrarManagerRifas() {
+            document.getElementById('managerModal').classList.add('hidden');
+        }
+
+        // Renderiza el listado de rifas activas en el modal
+        function actualizarListaManagerRifas() {
+            const list = document.getElementById('raffles-list');
+            list.innerHTML = '';
+
+            Object.keys(appState.raffles).forEach(id => {
+                const rifa = appState.raffles[id];
+                const activeClass = (id === appState.currentRaffleId) ? "border-blue-500 bg-blue-50/60" : "border-slate-100 hover:bg-slate-50";
+                
+                // Contar estadísticas rápidas
+                let pagados = 0;
+                let total = rifa.size;
+                Object.keys(rifa.data).forEach(k => {
+                    if (rifa.data[k].pagado) pagados++;
+                });
+
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-xl border flex items-center justify-between gap-2 transition-all ${activeClass}`;
+                div.innerHTML = `
+                    <div class="cursor-pointer flex-1" onclick="cambiarRifaActiva('${id}')">
+                        <h4 class="font-bold text-slate-800 text-sm">${rifa.title}</h4>
+                        <p class="text-[11px] text-slate-500 mt-0.5">
+                            Tamaño: <span class="font-semibold">${total} num.</span> | 
+                            Moneda: <span class="font-semibold">${rifa.currency}</span> | 
+                            Pagados: <span class="text-emerald-600 font-bold">${pagados}/${total}</span>
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="confirmarEliminarRifa('${id}')" class="text-slate-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar Rifa">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // Cambiar la rifa que se está controlando actualmente
+        function cambiarRifaActiva(id) {
+            if (appState.raffles[id]) {
+                appState.currentRaffleId = id;
+                // Reiniciar visualizador por si cambia de tamaño
+                pageStart = 0;
+                currentSearchQuery = "";
+                const searchInput = document.getElementById('search-number');
+                if (searchInput) searchInput.value = "";
+
+                guardarLocalmente();
+                actualizarVistaEncabezado();
+                renderGrid();
+                cerrarManagerRifas();
+                showToast(`Se cambió a la rifa: ${appState.raffles[id].title} 📂`, "info");
+                sincronizarConNube();
+            }
+        }
+
+        // Crear una nueva rifa desde el administrador
+        function crearNuevaRifa() {
+            const titleInput = document.getElementById('new-raffle-title');
+            const sizeInput = document.getElementById('new-raffle-size');
+            const currencyInput = document.getElementById('new-raffle-currency');
+
+            const title = titleInput.value.trim();
+            const size = parseInt(sizeInput.value) || 100;
+            const currency = currencyInput.value;
+
+            if (title === "") {
+                titleInput.classList.add('border-red-500', 'ring-red-200', 'ring-2');
+                setTimeout(() => titleInput.classList.remove('border-red-500', 'ring-red-200', 'ring-2'), 1000);
+                showToast("Ingresa el título para crear la rifa 💸", "error");
+                return;
+            }
+
+            const newId = "raffle-" + Date.now();
+            appState.raffles[newId] = {
+                id: newId,
+                title: title,
+                price: size === 1000 ? 10 : (size === 50 ? 60 : 50), // Precios base recomendados
+                prize: size === 1000 ? 5000 : 2000,
+                syncCode: "",
+                lottery: "Catochi Nocturno (Lotto Aruba)",
+                currency: currency,
+                size: size,
+                data: crearTableroVacio(size)
+            };
+
+            // Cambiar automáticamente a la nueva rifa
+            appState.currentRaffleId = newId;
+            pageStart = 0;
+            currentSearchQuery = "";
+            titleInput.value = "";
+
+            guardarLocalmente();
+            actualizarVistaEncabezado();
+            renderGrid();
+            cerrarManagerRifas();
+            showToast(`¡Rifa "${title}" creada con éxito! 💵`, "success");
+        }
+
+        // Llamar confirmación de eliminación de una rifa entera
+        function confirmarEliminarRifa(id) {
+            const rifa = appState.raffles[id];
+            if (!rifa) return;
+
+            // Evitar eliminar la última rifa disponible para no romper la app
+            if (Object.keys(appState.raffles).length <= 1) {
+                showToast("No puedes eliminar tu única rifa activa 💸", "error");
+                return;
+            }
+
+            mostrarConfirmacion(
+                `¿Eliminar "${rifa.title}"?`,
+                "Se borrarán todos los datos y listas de esta rifa de forma permanente de tu celular.",
+                () => {
+                    cerrarConfirmacion();
+                    ejecutarEliminacionRifa(id);
+                }
+            );
+        }
+
+        // Eliminar físicamente una rifa
+        function ejecutarEliminacionRifa(id) {
+            delete appState.raffles[id];
+            
+            // Si eliminamos la actual, cambiar a otra
+            if (appState.currentRaffleId === id) {
+                appState.currentRaffleId = Object.keys(appState.raffles)[0];
+            }
+
+            pageStart = 0;
+            currentSearchQuery = "";
+
+            guardarLocalmente();
+            actualizarVistaEncabezado();
+            renderGrid();
+            actualizarListaManagerRifas();
+            showToast("Rifa eliminada correctamente 💸", "info");
+        }
+
+        // Mostrar modal personalizado de confirmación
+        function mostrarConfirmacion(title, text, onYesCallback) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-text').innerText = text;
+            
+            const yesBtn = document.getElementById('confirm-yes-btn');
+            // Reemplazar botón para remover listeners antiguos
+            const clone = yesBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(clone, yesBtn);
+            
+            clone.onclick = onYesCallback;
+
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+
+        function cerrarConfirmacion() {
+            document.getElementById('confirmModal').classList.add('hidden');
+        }
+
+        // Toasts Modernos
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toast-container');
+            
+            const toast = document.createElement('div');
+            toast.className = 'p-4 rounded-xl shadow-lg border text-white font-semibold flex items-center justify-between gap-3 transform translate-y-2 transition-all duration-300 opacity-0';
+            
+            if (type === "success") {
+                toast.classList.add('bg-emerald-500', 'border-emerald-600');
+            } else if (type === "error") {
+                toast.classList.add('bg-orange-500', 'border-orange-600');
+            } else {
+                toast.classList.add('bg-blue-600', 'border-blue-700');
+            }
+
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button class="text-white/80 hover:text-white font-bold text-lg leading-none" onclick="this.parentElement.remove()">&times;</button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Control visual de la barra de sincronización
+        function actualizarBarraSincronizacion(state) {
+            const ping = document.getElementById('sync-ping');
+            const dot = document.getElementById('sync-dot');
+            const text = document.getElementById('sync-text');
+            const btnSync = document.getElementById('btn-sync-now');
+            const rifa = getRifaActiva();
+
+            if (state === "local") {
+                ping.className = "hidden";
+                dot.className = "relative inline-flex rounded-full h-3.5 w-3.5 bg-slate-400";
+                text.innerText = "Modo Local (Sin sincronización en la nube)";
+                btnSync.classList.add('hidden');
+            } else if (state === "syncing") {
+                ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75";
+                dot.className = "relative inline-flex rounded-full h-3.5 w-3.5 bg-blue-500";
+                text.innerText = "Sincronizando con la nube... 💸";
+                btnSync.classList.remove('hidden');
+            } else if (state === "connected") {
+                ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+                dot.className = "relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500";
+                text.innerHTML = `Nube Activa 💵 Código: <span class="font-mono bg-white px-1.5 py-0.5 rounded border text-xs text-emerald-700 font-bold">${rifa.syncCode}</span>`;
+                btnSync.classList.remove('hidden');
+            } else if (state === "error") {
+                ping.className = "hidden";
+                dot.className = "relative inline-flex rounded-full h-3.5 w-3.5 bg-orange-500";
+                text.innerText = "Error de conexión temporal con la nube 💸";
+                btnSync.classList.remove('hidden');
+            }
+        }
+
+        // Ejecutar al cargar la página
+        window.onload = function() {
+            inicializarDatos();
+            renderGrid();
+            
+            // Ejecutar la sincronización inicial
+            sincronizarConNube();
+
+            // Sincronización automática en segundo plano cada 12 segundos
+            setInterval(() => {
+                const rifa = getRifaActiva();
+                if (rifa && rifa.syncCode && rifa.syncCode.trim() !== "") {
+                    sincronizarConNube();
+                }
+            }, 12000);
+        };
+    </script>
+</body>
+</html>

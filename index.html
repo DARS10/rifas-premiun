@@ -117,7 +117,7 @@
                 <!-- Nombre -->
                 <div class="mb-4">
                     <label for="nombre" class="block text-sm font-semibold text-slate-600 mb-1">Nombre del Comprador</label>
-                    <input type="text" id="nombre" placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 placeholder-slate-400">
+                    <input type="text" id="nombre" oninput="actualizarVisibilidadWhatsapp()" placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 placeholder-slate-400">
                 </div>
 
                 <!-- Teléfono (WhatsApp) -->
@@ -412,18 +412,26 @@
                 }
             }
 
+            // COMPRESIÓN CRÍTICA: Eliminar campos vacíos innecesarios para mantenerse debajo de los 16KB de la nube
+            Object.keys(appState.raffles).forEach(id => {
+                const rifa = appState.raffles[id];
+                if (rifa.data) {
+                    Object.keys(rifa.data).forEach(k => {
+                        const item = rifa.data[k];
+                        if (!item || (!item.reservado && !item.pagado && (!item.nombre || item.nombre.trim() === ""))) {
+                            delete rifa.data[k];
+                        }
+                    });
+                }
+            });
+            guardarLocalmente();
+
             actualizarVistaEncabezado();
         }
 
-        // Crea una estructura de números vacíos
+        // Crea una estructura de números vacíos (optimizada: dispersa)
         function crearTableroVacio(size) {
-            const data = {};
-            const padLen = size === 1000 ? 3 : 2;
-            for (let i = 0; i < size; i++) {
-                const num = String(i).padStart(padLen, '0');
-                data[num] = { nombre: "", telefono: "", direccion: "", pagado: false, reservado: false };
-            }
-            return data;
+            return {}; // Estructura ultra comprimida para no usar bytes inútiles en la nube
         }
 
         // Obtener la rifa activa actual
@@ -474,9 +482,7 @@
                                 const intVal = parseInt(k, 10);
                                 if (!isNaN(intVal)) {
                                     const newKey = String(intVal).padStart(newPadLen, '0');
-                                    if (vData.hasOwnProperty(newKey)) {
-                                        vData[newKey] = rifa.data[k];
-                                    }
+                                    vData[newKey] = rifa.data[k];
                                 }
                             });
                             rifa.data = vData;
@@ -499,7 +505,6 @@
             } catch (error) {
                 console.error("Error al sincronizar con la nube:", error);
                 actualizarBarraSincronizacion("error");
-                showToast("Fallo de conexión. Operando en modo local temporalmente 💸", "error");
             }
         }
 
@@ -508,6 +513,14 @@
             const rifa = getRifaActiva();
             if (!rifa.syncCode || rifa.syncCode.trim() === "") return;
             const targetUrl = url || (cloudBucketURL + rifa.syncCode.trim().toLowerCase().replace(/[^a-z0-9-_]/g, ''));
+
+            // Doble verificación: limpiar antes de subir para asegurar el tamaño ultra ligero
+            Object.keys(rifa.data).forEach(k => {
+                const item = rifa.data[k];
+                if (!item || (!item.reservado && !item.pagado && (!item.nombre || item.nombre.trim() === ""))) {
+                    delete rifa.data[k];
+                }
+            });
 
             const payload = {
                 settings: {
@@ -554,13 +567,20 @@
             let pend = 0;
             let pag = 0;
 
+            const totalNumeros = rifa.size;
+            const padLen = totalNumeros === 1000 ? 3 : 2;
+
             // Calcular contadores generales de toda la rifa activa
-            Object.keys(rifa.data).forEach(key => {
-                const item = rifa.data[key];
-                if (item.pagado) pag++;
-                else if (item.reservado) pend++;
-                else disp++;
-            });
+            for (let i = 0; i < totalNumeros; i++) {
+                const num = String(i).padStart(padLen, '0');
+                const item = rifa.data[num];
+                if (item && item.reservado) {
+                    if (item.pagado) pag++;
+                    else pend++;
+                } else {
+                    disp++;
+                }
+            }
 
             // Configurar el sistema de paginación/búsqueda para 1000 números
             if (rifa.size === 1000) {
@@ -571,10 +591,6 @@
                 currentSearchQuery = "";
                 if (searchInput) searchInput.value = "";
             }
-
-            // Obtener el listado filtrado de números a mostrar
-            const totalNumeros = rifa.size;
-            const padLen = totalNumeros === 1000 ? 3 : 2;
 
             for (let i = 0; i < totalNumeros; i++) {
                 const num = String(i).padStart(padLen, '0');
@@ -673,6 +689,17 @@
                 inputOtro.focus();
             } else {
                 inputOtro.classList.add('hidden');
+            }
+        }
+
+        // Función para controlar la visibilidad dinámica del botón de WhatsApp al escribir
+        function actualizarVisibilidadWhatsapp() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const btnWhatsapp = document.getElementById('btn-whatsapp');
+            if (nombre !== "") {
+                btnWhatsapp.classList.remove('hidden');
+            } else {
+                btnWhatsapp.classList.add('hidden');
             }
         }
 
@@ -816,7 +843,7 @@
         // Borrar el registro de un número
         async function ejecutarLiberacion(num) {
             const rifa = getRifaActiva();
-            rifa.data[num] = { nombre: "", telefono: "", direccion: "", pagado: false, reservado: false };
+            delete rifa.data[num]; // Eliminar llave completamente para no consumir espacio
             
             guardarLocalmente();
             renderGrid();
@@ -835,7 +862,11 @@
             const rifa = getRifaActiva();
             const num = document.getElementById('current-number').value;
             const nombre = document.getElementById('nombre').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
+            
+            const selectIndicativo = document.getElementById('telefono-indicativo').value;
+            const inputOtro = document.getElementById('telefono-indicativo-otro').value.trim();
+            const inputTel = document.getElementById('telefono').value.trim();
+            
             const direccion = document.getElementById('direccion').value.trim();
             const pagado = document.getElementById('pagado').checked;
 
@@ -844,10 +875,19 @@
                 return;
             }
 
+            // Construir el prefijo internacional
+            let prefijo = selectIndicativo;
+            if (selectIndicativo === "otro") {
+                prefijo = inputOtro.startsWith("+") ? inputOtro : "+" + inputOtro;
+                if (prefijo === "+") prefijo = "";
+            }
+            let telLimpioInput = inputTel.replace(/[^0-9]/g, '');
+            let telefonoCompleto = telLimpioInput !== "" ? (prefijo + telLimpioInput) : "";
+
             // Guardar cambios automáticamente antes de enviar para evitar enviar datos antiguos
             rifa.data[num] = {
                 nombre: nombre,
-                telefono: telefono,
+                telefono: telefonoCompleto,
                 direccion: direccion,
                 pagado: pagado,
                 reservado: true
@@ -882,10 +922,10 @@
             
             texto += `💵💵💵 ¡Gracias por participar! 💵💵💵`;
 
-            // Formateo del teléfono
-            let telLimpio = telefono.replace(/\D/g, ''); 
+            // Formateo del teléfono para el link
+            let telLimpio = telefonoCompleto.replace(/\D/g, ''); 
             
-            // Si el número tiene 7 dígitos (formato estándar de Aruba), anexar el prefijo +297
+            // Si el número tiene 7 dígitos (formato estándar de Aruba), anexar el prefijo 297
             if (telLimpio.length === 7) {
                 telLimpio = "297" + telLimpio;
             }
@@ -960,20 +1000,19 @@
         async function ejecutarCambioAjustes(nuevoTamaño, nuevoTitulo, nuevoPrecio, nuevoPremio, nuevoCodigo, nuevaLoteria, nuevaMoneda, cambioDeCodigo) {
             const rifa = getRifaActiva();
 
-            // Adaptar estructura si cambió de tamaño mapeando dígitos de forma inteligente (de 2 a 3 dígitos o viceversa)
+            // Adaptar estructura si cambió de tamaño
             if (rifa.size !== nuevoTamaño) {
                 const viejoData = rifa.data;
                 rifa.size = nuevoTamaño;
-                rifa.data = crearTableroVacio(nuevoTamaño);
+                rifa.data = crearTableroVacio(nuevoTamaño); // {}
                 const newPadLen = nuevoTamaño === 1000 ? 3 : 2;
                 
+                // Traspasar únicamente las llaves que quepan en el nuevo rango
                 Object.keys(viejoData).forEach(k => {
                     const intVal = parseInt(k, 10);
-                    if (!isNaN(intVal)) {
+                    if (!isNaN(intVal) && intVal < nuevoTamaño) {
                         const newKey = String(intVal).padStart(newPadLen, '0');
-                        if (rifa.data.hasOwnProperty(newKey)) {
-                            rifa.data[newKey] = viejoData[k];
-                        }
+                        rifa.data[newKey] = viejoData[k];
                     }
                 });
             }
@@ -1022,6 +1061,7 @@
             document.getElementById('managerModal').classList.remove('hidden');
         }
 
+        // Cerrar panel de gestor de rifas
         function cerrarManagerRifas() {
             document.getElementById('managerModal').classList.add('hidden');
         }
@@ -1035,11 +1075,11 @@
                 const rifa = appState.raffles[id];
                 const activeClass = (id === appState.currentRaffleId) ? "border-blue-500 bg-blue-50/60" : "border-slate-100 hover:bg-slate-50";
                 
-                // Contar estadísticas rápidas
+                // Contar estadísticas de forma ultra eficiente
                 let pagados = 0;
                 let total = rifa.size;
                 Object.keys(rifa.data).forEach(k => {
-                    if (rifa.data[k].pagado) pagados++;
+                    if (rifa.data[k] && rifa.data[k].pagado) pagados++;
                 });
 
                 const div = document.createElement('div');
@@ -1067,7 +1107,6 @@
         function cambiarRifaActiva(id) {
             if (appState.raffles[id]) {
                 appState.currentRaffleId = id;
-                // Reiniciar visualizador por si cambia de tamaño
                 pageStart = 0;
                 currentSearchQuery = "";
                 const searchInput = document.getElementById('search-number');
@@ -1103,7 +1142,7 @@
             appState.raffles[newId] = {
                 id: newId,
                 title: title,
-                price: size === 1000 ? 10 : (size === 50 ? 60 : 50), // Precios base recomendados
+                price: size === 1000 ? 10 : (size === 50 ? 60 : 50),
                 prize: size === 1000 ? 5000 : 2000,
                 syncCode: "",
                 lottery: "Catochi Nocturno (Lotto Aruba)",
@@ -1255,13 +1294,13 @@
             // Ejecutar la sincronización inicial
             sincronizarConNube();
 
-            // Sincronización automática en segundo plano cada 12 segundos
+            // Sincronización automática en segundo plano optimizada cada 15 segundos
             setInterval(() => {
                 const rifa = getRifaActiva();
                 if (rifa && rifa.syncCode && rifa.syncCode.trim() !== "") {
                     sincronizarConNube();
                 }
-            }, 12000);
+            }, 15000);
         };
     </script>
 </body>

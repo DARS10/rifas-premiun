@@ -322,6 +322,93 @@
     <!-- Contenedor para Notificaciones Flotantes (Toasts) -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0"></div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let db, auth;
+        let unsubscribeSnapshot = null;
+
+        // Inicializamos la conexión segura con Google Firestore
+        async function initFirebase() {
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+                
+                if (!firebaseConfig) {
+                    console.warn("Entorno local sin configuración de Nube.");
+                    return false;
+                }
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                return true;
+            } catch (e) {
+                console.error("Error de inicialización de Nube:", e);
+                return false;
+            }
+        }
+
+        // Puente de comunicación entre tu App y la base de datos
+        window.CloudSync = {
+            isReady: false,
+            init: async () => {
+                window.CloudSync.isReady = await initFirebase();
+                if (window.CloudSync.isReady && typeof window.sincronizarConNube === 'function') {
+                    window.sincronizarConNube(true); // Arrancar sincronización apenas esté listo
+                }
+            },
+            subirEstado: async (syncCode, payload) => {
+                if (!window.CloudSync.isReady || !auth.currentUser) throw new Error("Nube no conectada");
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'raffles', syncCode);
+                await setDoc(docRef, payload);
+            },
+            descargarEstado: async (syncCode) => {
+                if (!window.CloudSync.isReady || !auth.currentUser) throw new Error("Nube no conectada");
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'raffles', syncCode);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    return docSnap.data();
+                }
+                return null;
+            },
+            listenEstado: (syncCode, callback) => {
+                if (!window.CloudSync.isReady || !auth.currentUser) return;
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'raffles', syncCode);
+
+                if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+                // OnSnapshot nos permite escuchar cambios en tiempo real automáticamente
+                unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        callback(docSnap.data());
+                    }
+                }, (error) => {
+                    console.error("Error en conexión en vivo:", error);
+                });
+            },
+            stopListen: () => {
+                if (unsubscribeSnapshot) {
+                    unsubscribeSnapshot();
+                    unsubscribeSnapshot = null;
+                }
+            }
+        };
+
+        window.CloudSync.init();
+    </script>
+
     <script>
         // Variables de estado principal (Soporte multirifa)
         let appState = {
@@ -334,9 +421,8 @@
         let pageSize = 200; // Bloques de visualización para 1000 números
         let currentSearchQuery = "";
 
-        // URL del almacén en la nube
-        const cloudBucketURL = "https://kvdb.io/8x9zYv7pWq3r2sT1uN4bK6_deiby_raffles/";
-        let lastCloudSyncTime = 0;
+        // Código de la nube para conexión en tiempo real
+        let currentSyncCodeLive = ""; 
 
         // Carga y prepara el estado de la app
         function inicializarDatos() {
@@ -444,77 +530,93 @@
             localStorage.setItem('rifaMultiAppState', JSON.stringify(appState));
         }
 
-        // Sincronizar la rifa activa con la base de datos en la nube
-        async function sincronizarConNube() {
+        // Sincronizar la rifa activa con la base de datos en la nube (Tiempo Real)
+        async function sincronizarConNube(forzarActualizacion = false) {
             const rifa = getRifaActiva();
             if (!rifa.syncCode || rifa.syncCode.trim() === "") {
                 actualizarBarraSincronizacion("local");
+                if (window.CloudSync) window.CloudSync.stopListen();
+                currentSyncCodeLive = "";
                 return;
             }
 
-            actualizarBarraSincronizacion("syncing");
+            // Si la nube aún no está lista, se llamará automáticamente cuando lo esté
+            if (!window.CloudSync || !window.CloudSync.isReady) return;
 
+            actualizarBarraSincronizacion("syncing");
             const cleanCode = rifa.syncCode.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
-            const url = cloudBucketURL + cleanCode;
 
             try {
-                const response = await fetch(url);
-                
-                if (response.ok) {
-                    const cloudPayload = await response.json();
+                // Si forzamos actualización manual o cambiamos de código
+                if (forzarActualizacion || currentSyncCodeLive !== cleanCode) {
+                    const cloudPayload = await window.CloudSync.descargarEstado(cleanCode);
                     
                     if (cloudPayload && cloudPayload.data && cloudPayload.settings) {
-                        // Sincronizar ajustes y datos de esta rifa
-                        rifa.data = cloudPayload.data;
-                        rifa.title = cloudPayload.settings.title || rifa.title;
-                        rifa.price = cloudPayload.settings.price || rifa.price;
-                        rifa.prize = cloudPayload.settings.prize || rifa.prize;
-                        rifa.lottery = cloudPayload.settings.lottery || rifa.lottery;
-                        rifa.currency = cloudPayload.settings.currency || rifa.currency;
-                        
-                        // Si el tamaño cambió en la nube, adaptar de forma inteligente mapeando dígitos
-                        const oldSize = rifa.size;
-                        rifa.size = parseInt(cloudPayload.settings.size) || rifa.size;
-                        if (oldSize !== rifa.size) {
-                            const vData = crearTableroVacio(rifa.size);
-                            const newPadLen = rifa.size === 1000 ? 3 : 2;
-                            Object.keys(rifa.data).forEach(k => {
-                                const intVal = parseInt(k, 10);
-                                if (!isNaN(intVal)) {
-                                    const newKey = String(intVal).padStart(newPadLen, '0');
-                                    vData[newKey] = rifa.data[k];
-                                }
-                            });
-                            rifa.data = vData;
-                        }
-
-                        guardarLocalmente();
-                        renderGrid();
-                        actualizarVistaEncabezado();
-                        actualizarBarraSincronizacion("connected");
-                        lastCloudSyncTime = Date.now();
+                        aplicarDatosNube(rifa, cloudPayload);
+                    } else {
+                        // Si el código es nuevo y no existe en la nube, subimos nuestro estado actual
+                        await subirEstadoNube();
                     }
-                } else if (response.status === 404) {
-                    // Si el código no existe en la nube, subir el estado actual local
-                    await subirEstadoNube(url);
-                    actualizarBarraSincronizacion("connected");
-                    lastCloudSyncTime = Date.now();
-                } else {
-                    throw new Error("Respuesta inválida del servidor");
+
+                    // Iniciar conexión permanente en tiempo real (reemplaza a las descargas manuales)
+                    window.CloudSync.listenEstado(cleanCode, (livePayload) => {
+                        if (livePayload && livePayload.data && livePayload.settings) {
+                            aplicarDatosNube(getRifaActiva(), livePayload);
+                        }
+                    });
+                    currentSyncCodeLive = cleanCode;
                 }
+                
+                actualizarBarraSincronizacion("connected");
             } catch (error) {
                 console.error("Error al sincronizar con la nube:", error);
                 actualizarBarraSincronizacion("error");
             }
         }
 
+        // Refleja los cambios que vienen de internet en la pantalla
+        function aplicarDatosNube(rifa, cloudPayload) {
+            rifa.data = cloudPayload.data;
+            rifa.title = cloudPayload.settings.title || rifa.title;
+            rifa.price = cloudPayload.settings.price || rifa.price;
+            rifa.prize = cloudPayload.settings.prize || rifa.prize;
+            rifa.lottery = cloudPayload.settings.lottery || rifa.lottery;
+            rifa.currency = cloudPayload.settings.currency || rifa.currency;
+            
+            const oldSize = rifa.size;
+            rifa.size = parseInt(cloudPayload.settings.size) || rifa.size;
+            if (oldSize !== rifa.size) {
+                const vData = crearTableroVacio(rifa.size);
+                const newPadLen = rifa.size === 1000 ? 3 : 2;
+                Object.keys(rifa.data).forEach(k => {
+                    const intVal = parseInt(k, 10);
+                    if (!isNaN(intVal)) {
+                        const newKey = String(intVal).padStart(newPadLen, '0');
+                        vData[newKey] = rifa.data[k];
+                    }
+                });
+                rifa.data = vData;
+            }
+
+            guardarLocalmente();
+            renderGrid();
+            actualizarVistaEncabezado();
+            actualizarBarraSincronizacion("connected");
+        }
+
         // Sube el estado actual a la nube
-        async function subirEstadoNube(url) {
+        async function subirEstadoNube() {
             const rifa = getRifaActiva();
             if (!rifa.syncCode || rifa.syncCode.trim() === "") return;
-            const targetUrl = url || (cloudBucketURL + rifa.syncCode.trim().toLowerCase().replace(/[^a-z0-9-_]/g, ''));
+            
+            if (!window.CloudSync || !window.CloudSync.isReady) {
+                showToast("Conectando con la nube... 💸", "info");
+                return;
+            }
 
-            // Doble verificación: limpiar antes de subir para asegurar el tamaño ultra ligero
+            const cleanCode = rifa.syncCode.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
+
+            // Doble verificación: limpiar datos vacíos antes de subir para asegurar un envío veloz
             Object.keys(rifa.data).forEach(k => {
                 const item = rifa.data[k];
                 if (!item || (!item.reservado && !item.pagado && (!item.nombre || item.nombre.trim() === ""))) {
@@ -536,21 +638,17 @@
             };
 
             try {
-                const response = await fetch(targetUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) throw new Error("No se pudo guardar en la nube");
+                await window.CloudSync.subirEstado(cleanCode, payload);
             } catch (error) {
                 console.error("Error al subir estado:", error);
                 showToast("Cambios guardados localmente pero no en la nube 💸", "error");
+                actualizarBarraSincronizacion("error");
             }
         }
 
         // Fuerza una sincronización manual
         function forzarSincronizacion() {
-            sincronizarConNube();
+            sincronizarConNube(true);
             showToast("Buscando actualizaciones en la nube... 💵", "info");
         }
 
@@ -1291,16 +1389,8 @@
             inicializarDatos();
             renderGrid();
             
-            // Ejecutar la sincronización inicial
-            sincronizarConNube();
-
-            // Sincronización automática en segundo plano optimizada cada 15 segundos
-            setInterval(() => {
-                const rifa = getRifaActiva();
-                if (rifa && rifa.syncCode && rifa.syncCode.trim() !== "") {
-                    sincronizarConNube();
-                }
-            }, 15000);
+            // Ya no usamos sincronización manual obligada cada 15 segundos. 
+            // La nube ahora se conecta automáticamente y reacciona en tiempo real.
         };
     </script>
 </body>

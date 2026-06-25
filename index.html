@@ -7,6 +7,7 @@
     <!-- Cargar Tailwind CSS para un diseño premium y responsivo -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -75,6 +76,14 @@
                 <span class="text-xs sm:text-sm font-semibold text-emerald-600 uppercase tracking-wide font-bold">Cash</span>
                 <span id="count-pag" class="text-2xl sm:text-3xl font-black text-emerald-500">0</span>
             </div>
+        </div>
+
+        <!-- Botón para Generar Captura del Tablero -->
+        <div class="mb-6">
+            <button onclick="generarCapturaTablero()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-750 hover:to-indigo-750 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2.5 text-sm sm:text-base border border-blue-500/20">
+                <svg class="w-5 h-5 animate-pulse text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span>Generar Captura / Imagen para WhatsApp 📸</span>
+            </button>
         </div>
 
         <!-- Filtros y Paginación (Se muestra dinámicamente según el tamaño de la rifa) -->
@@ -321,6 +330,64 @@
 
     <!-- Contenedor para Notificaciones Flotantes (Toasts) -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0"></div>
+
+    <!-- ======================= ADICIONES DE CAPTURA ======================= -->
+    <!-- Contenedor Invisible para Generar la Imagen de Captura -->
+    <div id="capture-area-container" class="absolute left-[-9999px] top-[-9999px] pointer-events-none">
+        <div id="capture-area" class="inline-block bg-slate-950 p-6 rounded-[1.5rem]" style="font-family: 'Inter', sans-serif;">
+            <!-- Grilla en la Captura -->
+            <div id="capture-grid" class="grid gap-1.5 justify-center">
+                <!-- Inyectado por JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventana Emergente: Vista Previa de Captura para Compartir -->
+    <div id="sharePreviewModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/80 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all flex flex-col">
+            <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span>📸 Captura del Tablero</span>
+                </h2>
+                <button onclick="cerrarSharePreviewModal()" class="text-slate-400 hover:text-slate-700 focus:outline-none p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 flex-1 flex flex-col items-center justify-center gap-4 overflow-y-auto max-h-[75vh]">
+                <p class="text-xs text-slate-500 text-center leading-relaxed">Tu tablero se ha optimizado en una hermosa imagen de alta calidad, perfecta para compartir en tus estados de WhatsApp o Facebook. 🚀</p>
+                
+                <!-- Previsualización de la imagen generada -->
+                <div id="img-preview-container" class="border border-slate-200 rounded-2xl overflow-hidden shadow-inner max-w-xs bg-slate-100 flex items-center justify-center relative min-h-[250px] w-full">
+                    <!-- Loader Interno -->
+                    <div id="img-preview-loader" class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white z-10">
+                        <span class="flex h-10 w-10 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-10 w-10 bg-blue-600 flex items-center justify-center text-white">
+                                <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H18"></path></svg>
+                            </span>
+                        </span>
+                        <span class="text-xs font-semibold text-slate-500 animate-pulse">Generando Flyer Premium...</span>
+                    </div>
+                    <img id="share-image-preview" src="" alt="Vista previa de tablero" class="w-full h-auto object-contain hidden max-h-[380px]">
+                </div>
+                
+                <!-- Botón de acciones -->
+                <div class="w-full flex flex-col gap-2.5 mt-2">
+                    <button id="btn-download-captured-img" onclick="descargarImagenGenerada()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Descargar en Galería 📥</span>
+                    </button>
+                    
+                    <button id="btn-native-share-img" onclick="compartirImagenGenerada()" class="hidden w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742l4.996-3.078m0 4.143l-4.996-3.078m0 0L14 15m-1.316-2.258A3 3 0 1118 10a3 3 0 01-4.316 2.742z"></path></svg>
+                        <span>Compartir en WhatsApp 📲</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ======================= FIN ADICIONES DE CAPTURA ======================= -->
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1383,6 +1450,137 @@
                 btnSync.classList.remove('hidden');
             }
         }
+
+        /* ==================== FUNCIONES DE GENERACIÓN DE CAPTURA ==================== */
+        async function generarCapturaTablero() {
+            // Mostrar modal y Loader
+            document.getElementById('sharePreviewModal').classList.remove('hidden');
+            document.getElementById('img-preview-loader').classList.remove('hidden');
+            document.getElementById('share-image-preview').classList.add('hidden');
+
+            const rifa = getRifaActiva();
+            const size = rifa.size;
+            const padLen = size === 1000 ? 3 : 2;
+
+            // Generar la grilla optimizada
+            const captureGrid = document.getElementById('capture-grid');
+            captureGrid.innerHTML = '';
+
+            // Clases de grilla responsiva adaptativa para la captura
+            captureGrid.className = 'grid gap-1.5 justify-center';
+            if (size <= 50) {
+                captureGrid.classList.add('grid-cols-5');
+            } else if (size <= 100) {
+                captureGrid.classList.add('grid-cols-10');
+            } else {
+                captureGrid.classList.add('grid-cols-20');
+            }
+
+            for (let i = 0; i < size; i++) {
+                const num = String(i).padStart(padLen, '0');
+                const data = rifa.data[num] || { reservado: false, pagado: false, nombre: "" };
+                const cell = document.createElement('div');
+                
+                cell.className = 'flex items-center justify-center font-black rounded-lg text-center shadow-sm border select-none ';
+                
+                if (size === 1000) {
+                    cell.className += ' text-[7px] w-[22px] h-[22px] rounded-md';
+                } else {
+                    cell.className += ' text-sm w-[44px] h-[44px]';
+                }
+
+                if (data.pagado) {
+                    cell.className += ' bg-emerald-500 text-white border-emerald-600';
+                    cell.innerText = num;
+                } else if (data.reservado) {
+                    cell.className += ' bg-orange-400 text-white border-orange-500';
+                    cell.innerText = num;
+                } else {
+                    cell.className += ' bg-slate-800 text-slate-400 border-slate-700/60';
+                    cell.innerText = num;
+                }
+                captureGrid.appendChild(cell);
+            }
+
+            // Forzar espera para renderizado CSS y llamar html2canvas
+            setTimeout(async () => {
+                try {
+                    const canvas = await html2canvas(document.getElementById('capture-area'), {
+                        scale: 2.2, // Mayor calidad para evitar pixelado en WhatsApp
+                        useCORS: true,
+                        backgroundColor: '#020617'
+                    });
+                    
+                    const base64image = canvas.toDataURL("image/png");
+                    const imgPreview = document.getElementById('share-image-preview');
+                    imgPreview.src = base64image;
+                    
+                    // Ocultar loader y mostrar imagen
+                    document.getElementById('img-preview-loader').classList.add('hidden');
+                    imgPreview.classList.remove('hidden');
+
+                    // Mostrar botón nativo si se puede compartir
+                    const response = await fetch(base64image);
+                    const blob = await response.blob();
+                    const file = new File([blob], "tablero-rifa.png", { type: "image/png" });
+                    
+                    const shareBtn = document.getElementById('btn-native-share-img');
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        shareBtn.classList.remove('hidden');
+                    } else {
+                        shareBtn.classList.add('hidden');
+                    }
+                } catch (err) {
+                    console.error("Error al generar flyer:", err);
+                    showToast("Error al generar la imagen. Inténtalo de nuevo.", "error");
+                    cerrarSharePreviewModal();
+                }
+            }, 300);
+        }
+
+        function cerrarSharePreviewModal() {
+            document.getElementById('sharePreviewModal').classList.add('hidden');
+        }
+
+        function descargarImagenGenerada() {
+            const img = document.getElementById('share-image-preview');
+            if (!img.src) return;
+            
+            const link = document.createElement('a');
+            const rifa = getRifaActiva();
+            const cleanTitle = (rifa.title || "rifa").toLowerCase().replace(/[^a-z0-9]/g, "-");
+            link.download = `tablero-${cleanTitle}-${Date.now()}.png`;
+            link.href = img.src;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("¡Imagen guardada con éxito en tu dispositivo! 📥", "success");
+        }
+
+        async function compartirImagenGenerada() {
+            const imgElement = document.getElementById('share-image-preview');
+            if (!imgElement.src) return;
+
+            try {
+                const response = await fetch(imgElement.src);
+                const blob = await response.blob();
+                const file = new File([blob], "tablero-rifa.png", { type: "image/png" });
+                
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Tablero de Rifa Activo',
+                        text: '¡Escríbeme para reservar tu número de la suerte antes de que se agoten! 🍀'
+                    });
+                } else {
+                    descargarImagenGenerada();
+                }
+            } catch (err) {
+                console.error("Error al compartir imagen:", err);
+                descargarImagenGenerada();
+            }
+        }
+        /* ==================== FIN FUNCIONES DE CAPTURA ==================== */
 
         // Ejecutar al cargar la página
         window.onload = function() {

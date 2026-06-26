@@ -82,11 +82,11 @@
         <div class="mb-6">
             <button onclick="generarCapturaTablero()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-750 hover:to-indigo-750 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex justify-center items-center gap-2.5 text-sm sm:text-base border border-blue-500/20">
                 <svg class="w-5 h-5 animate-pulse text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span>Generar Captura / Imagen para WhatsApp 📸</span>
+                <span>Generar Captura del Tablero (Solo Números) 📸</span>
             </button>
         </div>
 
-        <!-- Filtros y Paginación (Se muestra dinámicamente según el tamaño de la rifa) -->
+        <!-- Filtros y Paginación -->
         <div id="filter-container" class="mb-4 flex flex-col sm:flex-row gap-3 items-center justify-between bg-white border border-slate-100 p-4 rounded-xl shadow-sm hidden">
             <!-- Buscador rápido -->
             <div class="relative w-full sm:w-64">
@@ -97,15 +97,11 @@
             </div>
 
             <!-- Paginador para 1,000 números -->
-            <div id="pagination-pages" class="flex flex-wrap gap-1 justify-center">
-                <!-- Se inyecta por JS (ej: 0-199, 200-399, etc.) -->
-            </div>
+            <div id="pagination-pages" class="flex flex-wrap gap-1 justify-center"></div>
         </div>
 
-        <!-- Cuadrícula de Números -->
-        <div id="grid" class="grid grid-cols-5 sm:grid-cols-10 gap-2 sm:gap-3">
-            <!-- Cargado automáticamente por JS -->
-        </div>
+        <!-- Cuadrícula de Números Principal -->
+        <div id="grid" class="grid grid-cols-5 sm:grid-cols-10 gap-2 sm:gap-3"></div>
 
     </div>
 
@@ -148,9 +144,7 @@
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                             </div>
                         </div>
-                        <!-- Campo de indicativo personalizado (oculto por defecto) -->
                         <input type="text" id="telefono-indicativo-otro" placeholder="+code" class="hidden w-20 px-3 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 text-center placeholder-slate-400 font-bold">
-                        
                         <input type="tel" id="telefono" oninput="actualizarVisibilidadWhatsapp()" placeholder="Número de celular" class="flex-1 px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 placeholder-slate-400">
                     </div>
                 </div>
@@ -172,11 +166,9 @@
                     <button onclick="guardarDatos()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2">
                         Guardar Cambios 💵
                     </button>
-                    
                     <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="hidden w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2">
                         Enviar Recibo Directo 💸
                     </button>
-
                     <button onclick="confirmarLiberarNumero()" class="mt-2 text-red-500 hover:text-red-700 hover:bg-red-50 font-semibold py-2 px-4 rounded-lg transition-colors w-full">
                         Eliminar / Liberar Número
                     </button>
@@ -203,7 +195,7 @@
                     <input type="text" id="settings-title" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800">
                 </div>
 
-                <!-- Cantidad de Números (Tamaño) -->
+                <!-- Cantidad de Números -->
                 <div class="mb-4">
                     <label for="settings-size" class="block text-sm font-semibold text-slate-600 mb-1">Cantidad de Números</label>
                     <select id="settings-size" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800">
@@ -270,9 +262,7 @@
                 <!-- Lista de Rifas Creadas -->
                 <div class="mb-6">
                     <h3 class="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wide">Tus Rifas Activas</h3>
-                    <div id="raffles-list" class="space-y-2 max-h-56 overflow-y-auto pr-1">
-                        <!-- Cargado dinámicamente -->
-                    </div>
+                    <div id="raffles-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
                 </div>
 
                 <hr class="border-slate-100 my-4" />
@@ -312,7 +302,6 @@
     <div id="confirmModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center px-4 bg-slate-900/80 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-2xl w-full max-w-xs overflow-hidden shadow-2xl p-6 text-center">
             <div class="text-red-500 mb-3 flex justify-center">
-                <!-- Icono de Advertencia -->
                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             </div>
             <h3 id="confirm-title" class="text-lg font-bold text-slate-900 mb-2">¿Estás seguro?</h3>
@@ -328,71 +317,67 @@
         </div>
     </div>
 
-    <!-- Contenedor para Notificaciones Flotantes (Toasts) -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0"></div>
-
-    <!-- ======================= ADICIONES DE CAPTURA ======================= -->
-    <!-- Contenedor Invisible para Generar la Imagen de Captura -->
-    <div id="capture-area-container" class="absolute left-[-9999px] top-[-9999px] pointer-events-none">
-        <div id="capture-area" class="inline-block bg-slate-950 p-6 rounded-[1.5rem]" style="font-family: 'Inter', sans-serif;">
-            <!-- Grilla en la Captura -->
-            <div id="capture-grid" class="grid gap-1.5 justify-center">
-                <!-- Inyectado por JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Ventana Emergente: Vista Previa de Captura para Compartir -->
+    <!-- Ventana Emergente: Vista Previa del Flyer Minimalista de WhatsApp -->
     <div id="sharePreviewModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/80 backdrop-blur-sm transition-opacity">
-        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all flex flex-col">
-            <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <span>📸 Captura del Tablero</span>
-                </h2>
-                <button onclick="cerrarSharePreviewModal()" class="text-slate-400 hover:text-slate-700 focus:outline-none p-1">
+        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">Tu Imagen de WhatsApp 📸</h3>
+                <button onclick="cerrarSharePreviewModal()" class="text-slate-400 hover:text-slate-700 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
-            <div class="p-6 flex-1 flex flex-col items-center justify-center gap-4 overflow-y-auto max-h-[75vh]">
-                <p class="text-xs text-slate-500 text-center leading-relaxed">Tu tablero se ha optimizado en una hermosa imagen de alta calidad, perfecta para compartir en tus estados de WhatsApp o Facebook. 🚀</p>
-                
-                <!-- Previsualización de la imagen generada -->
-                <div id="img-preview-container" class="border border-slate-200 rounded-2xl overflow-hidden shadow-inner max-w-xs bg-slate-100 flex items-center justify-center relative min-h-[250px] w-full">
-                    <!-- Loader Interno -->
-                    <div id="img-preview-loader" class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white z-10">
-                        <span class="flex h-10 w-10 relative">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-10 w-10 bg-blue-600 flex items-center justify-center text-white">
-                                <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H18"></path></svg>
-                            </span>
-                        </span>
-                        <span class="text-xs font-semibold text-slate-500 animate-pulse">Generando Flyer Premium...</span>
-                    </div>
-                    <img id="share-image-preview" src="" alt="Vista previa de tablero" class="w-full h-auto object-contain hidden max-h-[380px]">
+            <div class="flex flex-col items-center justify-center bg-slate-100 rounded-xl p-3 mb-4 min-h-[250px] relative">
+                <div id="img-preview-loader" class="flex flex-col items-center gap-2">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span class="text-xs text-slate-500 font-semibold">Creando grilla limpia de alta resolución...</span>
                 </div>
-                
-                <!-- Botón de acciones -->
-                <div class="w-full flex flex-col gap-2.5 mt-2">
-                    <button id="btn-download-captured-img" onclick="descargarImagenGenerada()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex justify-center items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        <span>Descargar en Galería 📥</span>
-                    </button>
-                    
-                    <button id="btn-native-share-img" onclick="compartirImagenGenerada()" class="hidden w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex justify-center items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742l4.996-3.078m0 4.143l-4.996-3.078m0 0L14 15m-1.316-2.258A3 3 0 1118 10a3 3 0 01-4.316 2.742z"></path></svg>
-                        <span>Compartir en WhatsApp 📲</span>
-                    </button>
-                </div>
+                <img id="share-image-preview" class="hidden rounded-lg max-h-[50vh] max-w-full object-contain shadow-md" alt="Grilla de WhatsApp">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button id="btn-native-share-img" onclick="compartirImagenGenerada()" class="hidden w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                    Compartir en WhatsApp 📲
+                </button>
+                <button onclick="descargarImagenGenerada()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Descargar Imagen 📥
+                </button>
             </div>
         </div>
     </div>
-    <!-- ======================= FIN ADICIONES DE CAPTURA ======================= -->
 
+    <!-- Espacio Invisible de Captura (Diseño de solo la grilla de números de la rifa) -->
+    <div class="absolute -left-[9999px] -top-[9999px]">
+        <div id="capture-area" class="bg-slate-900 p-8 rounded-3xl inline-block shadow-2xl">
+            <!-- Solo se cargará la grilla minimalista -->
+            <div id="capture-grid" class="grid gap-2 p-1 bg-slate-900 rounded-2xl"></div>
+        </div>
+    </div>
+
+    <!-- Contenedor para Notificaciones Flotantes (Toasts) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0"></div>
+
+    <!-- Script de Configuración e Inicialización de Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // =========================================================
+        // ⚙️ CREDENCIALES DE TU PROPIA CUENTA DE GOOGLE FIREBASE:
+        // =========================================================
+        const miFirebaseConfigCustom = {
+            apiKey: "AIzaSyByDMwPd8sX6ze1pSDnkSWlVtblP2x-TZM",
+            authDomain: "rifasapp-f16a0.firebaseapp.com",
+            projectId: "rifasapp-f16a0",
+            storageBucket: "rifasapp-f16a0.firebasestorage.app",
+            messagingSenderId: "387758939763",
+            appId: "1:387758939763:web:1940a446657dd5c864d406",
+            measurementId: "G-DSZ5YXS534"
+        };
+        // =========================================================
 
         let db, auth;
         let unsubscribeSnapshot = null;
@@ -400,20 +385,21 @@
         // Inicializamos la conexión segura con Google Firestore
         async function initFirebase() {
             try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-                
-                if (!firebaseConfig) {
-                    console.warn("Entorno local sin configuración de Nube.");
-                    return false;
-                }
-
-                const app = initializeApp(firebaseConfig);
+                const app = initializeApp(miFirebaseConfigCustom);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                // Evitamos usar el custom token del entorno si es un Firebase personalizado externo
+                // ya que causaría 'auth/configuration-not-found' al no estar autorizado en el proyecto.
+                const esDefaultConfig = (miFirebaseConfigCustom.apiKey === "REPLACE_WITH_YOUR_API_KEY");
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && esDefaultConfig) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (e) {
+                        console.warn("Fallo de custom token, reintentando anónimamente:", e);
+                        await signInAnonymously(auth);
+                    }
                 } else {
                     await signInAnonymously(auth);
                 }
@@ -433,16 +419,19 @@
                     window.sincronizarConNube(true); // Arrancar sincronización apenas esté listo
                 }
             },
-            subirEstado: async (syncCode, payload) => {
-                if (!window.CloudSync.isReady || !auth.currentUser) throw new Error("Nube no conectada");
+            obtenerDocRef: (syncCode) => {
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'raffles', syncCode);
+                // Cumple estrictamente con la Regla 1 (Ruta de acceso segura /artifacts/...)
+                return doc(db, 'artifacts', appId, 'public', 'data', 'raffles', syncCode);
+            },
+            subirEstado: async (syncCode, payload) => {
+                if (!window.CloudSync.isReady || !auth.currentUser) return;
+                const docRef = window.CloudSync.obtenerDocRef(syncCode);
                 await setDoc(docRef, payload);
             },
             descargarEstado: async (syncCode) => {
-                if (!window.CloudSync.isReady || !auth.currentUser) throw new Error("Nube no conectada");
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'raffles', syncCode);
+                if (!window.CloudSync.isReady || !auth.currentUser) return null;
+                const docRef = window.CloudSync.obtenerDocRef(syncCode);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     return docSnap.data();
@@ -451,12 +440,11 @@
             },
             listenEstado: (syncCode, callback) => {
                 if (!window.CloudSync.isReady || !auth.currentUser) return;
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'raffles', syncCode);
+                const docRef = window.CloudSync.obtenerDocRef(syncCode);
 
                 if (unsubscribeSnapshot) unsubscribeSnapshot();
 
-                // OnSnapshot nos permite escuchar cambios en tiempo real automáticamente
+                // OnSnapshot permite escuchar cambios en tiempo real automáticamente
                 unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
                     if (docSnap.exists()) {
                         callback(docSnap.data());
@@ -483,22 +471,18 @@
             raffles: {}
         };
 
-        // Estado del visualizador de 1000 números
         let pageStart = 0;
-        let pageSize = 200; // Bloques de visualización para 1000 números
+        let pageSize = 200; 
         let currentSearchQuery = "";
-
-        // Código de la nube para conexión en tiempo real
         let currentSyncCodeLive = ""; 
 
-        // Carga y prepara el estado de la app
+        // Inicialización y recuperación de la memoria del navegador
         function inicializarDatos() {
             const savedState = localStorage.getItem('rifaMultiAppState');
             
             if (savedState) {
                 appState = JSON.parse(savedState);
             } else {
-                // Intentar migrar desde la estructura de versión única anterior
                 const oldSettings = localStorage.getItem('rifaSettings');
                 const oldData = localStorage.getItem('rifaDataPremiumCloud');
                 
@@ -516,7 +500,6 @@
                     data: {}
                 };
 
-                // Si existen datos anteriores, migrarlos
                 if (oldSettings) {
                     try {
                         const parsedSettings = JSON.parse(oldSettings);
@@ -535,14 +518,12 @@
                         appState.raffles[defaultId].data = JSON.parse(oldData);
                     } catch(e) { console.error("Error migrando datos", e); }
                 } else {
-                    // Generar tablero en blanco si no hay datos
                     appState.raffles[defaultId].data = crearTableroVacio(appState.raffles[defaultId].size);
                 }
 
                 guardarLocalmente();
             }
 
-            // Validar que la rifa actual exista
             if (!appState.currentRaffleId || !appState.raffles[appState.currentRaffleId]) {
                 const keys = Object.keys(appState.raffles);
                 if (keys.length > 0) {
@@ -565,7 +546,7 @@
                 }
             }
 
-            // COMPRESIÓN CRÍTICA: Eliminar campos vacíos innecesarios para mantenerse debajo de los 16KB de la nube
+            // COMPRESIÓN CRÍTICA: Eliminar vacíos innecesarios para mantenerse siempre livianos
             Object.keys(appState.raffles).forEach(id => {
                 const rifa = appState.raffles[id];
                 if (rifa.data) {
@@ -578,26 +559,21 @@
                 }
             });
             guardarLocalmente();
-
             actualizarVistaEncabezado();
         }
 
-        // Crea una estructura de números vacíos (optimizada: dispersa)
         function crearTableroVacio(size) {
-            return {}; // Estructura ultra comprimida para no usar bytes inútiles en la nube
+            return {}; 
         }
 
-        // Obtener la rifa activa actual
         function getRifaActiva() {
             return appState.raffles[appState.currentRaffleId];
         }
 
-        // Guardar cambios del estado en local storage
         function guardarLocalmente() {
             localStorage.setItem('rifaMultiAppState', JSON.stringify(appState));
         }
 
-        // Sincronizar la rifa activa con la base de datos en la nube (Tiempo Real)
         async function sincronizarConNube(forzarActualizacion = false) {
             const rifa = getRifaActiva();
             if (!rifa.syncCode || rifa.syncCode.trim() === "") {
@@ -607,25 +583,21 @@
                 return;
             }
 
-            // Si la nube aún no está lista, se llamará automáticamente cuando lo esté
             if (!window.CloudSync || !window.CloudSync.isReady) return;
 
             actualizarBarraSincronizacion("syncing");
             const cleanCode = rifa.syncCode.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
 
             try {
-                // Si forzamos actualización manual o cambiamos de código
                 if (forzarActualizacion || currentSyncCodeLive !== cleanCode) {
                     const cloudPayload = await window.CloudSync.descargarEstado(cleanCode);
                     
                     if (cloudPayload && cloudPayload.data && cloudPayload.settings) {
                         aplicarDatosNube(rifa, cloudPayload);
                     } else {
-                        // Si el código es nuevo y no existe en la nube, subimos nuestro estado actual
                         await subirEstadoNube();
                     }
 
-                    // Iniciar conexión permanente en tiempo real (reemplaza a las descargas manuales)
                     window.CloudSync.listenEstado(cleanCode, (livePayload) => {
                         if (livePayload && livePayload.data && livePayload.settings) {
                             aplicarDatosNube(getRifaActiva(), livePayload);
@@ -636,12 +608,11 @@
                 
                 actualizarBarraSincronizacion("connected");
             } catch (error) {
-                console.error("Error al sincronizar con la nube:", error);
+                console.error("Error de sincronización de Firebase:", error);
                 actualizarBarraSincronizacion("error");
             }
         }
 
-        // Refleja los cambios que vienen de internet en la pantalla
         function aplicarDatosNube(rifa, cloudPayload) {
             rifa.data = cloudPayload.data;
             rifa.title = cloudPayload.settings.title || rifa.title;
@@ -671,7 +642,6 @@
             actualizarBarraSincronizacion("connected");
         }
 
-        // Sube el estado actual a la nube
         async function subirEstadoNube() {
             const rifa = getRifaActiva();
             if (!rifa.syncCode || rifa.syncCode.trim() === "") return;
@@ -683,7 +653,7 @@
 
             const cleanCode = rifa.syncCode.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
 
-            // Doble verificación: limpiar datos vacíos antes de subir para asegurar un envío veloz
+            // Compresión al vuelo: no guardamos celdas en blanco en Firebase
             Object.keys(rifa.data).forEach(k => {
                 const item = rifa.data[k];
                 if (!item || (!item.reservado && !item.pagado && (!item.nombre || item.nombre.trim() === ""))) {
@@ -708,18 +678,16 @@
                 await window.CloudSync.subirEstado(cleanCode, payload);
             } catch (error) {
                 console.error("Error al subir estado:", error);
-                showToast("Cambios guardados localmente pero no en la nube 💸", "error");
+                showToast("Cambios guardados localmente pero no en la nube de Firebase 💸", "error");
                 actualizarBarraSincronizacion("error");
             }
         }
 
-        // Fuerza una sincronización manual
         function forzarSincronizacion() {
             sincronizarConNube(true);
-            showToast("Buscando actualizaciones en la nube... 💵", "info");
+            showToast("Buscando actualizaciones en Firebase... 💵", "info");
         }
 
-        // Renderizar el tablero numérico adaptativo
         function renderGrid() {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
@@ -735,7 +703,6 @@
             const totalNumeros = rifa.size;
             const padLen = totalNumeros === 1000 ? 3 : 2;
 
-            // Calcular contadores generales de toda la rifa activa
             for (let i = 0; i < totalNumeros; i++) {
                 const num = String(i).padStart(padLen, '0');
                 const item = rifa.data[num];
@@ -747,8 +714,7 @@
                 }
             }
 
-            // Configurar el sistema de paginación/búsqueda para 1000 números
-            if (rifa.size === 1000) {
+            if (totalNumeros === 1000) {
                 filterContainer.classList.remove('hidden');
                 configurarPaginacion1000();
             } else {
@@ -761,22 +727,18 @@
                 const num = String(i).padStart(padLen, '0');
                 const data = rifa.data[num] || { nombre: "", telefono: "", direccion: "", pagado: false, reservado: false };
 
-                // Si es de tamaño 1000, aplicar filtros de paginación y buscador
                 if (totalNumeros === 1000) {
                     const matchesSearch = num.includes(currentSearchQuery) || (data.nombre && data.nombre.toLowerCase().includes(currentSearchQuery.toLowerCase()));
                     
                     if (currentSearchQuery === "") {
-                        // Si no hay búsqueda, filtrar por bloque de página
                         if (i < pageStart || i >= (pageStart + pageSize)) {
                             continue;
                         }
                     } else {
-                        // Si hay búsqueda, omitir si no coincide
                         if (!matchesSearch) continue;
                     }
                 }
 
-                // Crear botón de número
                 const btn = document.createElement('button');
                 btn.onclick = () => abrirModal(num);
                 btn.className = 'relative flex flex-col items-center justify-center p-1 rounded-xl shadow-sm border font-bold transition-all transform hover:-translate-y-1 hover:shadow-md h-16 sm:h-20 select-none';
@@ -795,18 +757,15 @@
                 grid.appendChild(btn);
             }
 
-            // Actualizar contadores en la vista
             document.getElementById('count-disp').innerText = disp;
             document.getElementById('count-pend').innerText = pend;
             document.getElementById('count-pag').innerText = pag;
         }
 
-        // Generar botones de páginas para rifas de 1000
         function configurarPaginacion1000() {
             const pagContainer = document.getElementById('pagination-pages');
             pagContainer.innerHTML = '';
 
-            // Solo mostrar páginas si no hay búsqueda activa
             if (currentSearchQuery !== "") {
                 pagContainer.innerHTML = `<span class="text-xs text-slate-500 italic">Resultados de búsqueda</span>`;
                 return;
@@ -837,14 +796,12 @@
             });
         }
 
-        // Filtrar números a través del input de búsqueda
         function filtrarNumeros() {
             const searchInput = document.getElementById('search-number');
             currentSearchQuery = searchInput.value.trim();
             renderGrid();
         }
 
-        // Permite alternar la visibilidad del campo para indicativo personalizado
         function toggleIndicativoPersonalizado() {
             const select = document.getElementById('telefono-indicativo');
             const inputOtro = document.getElementById('telefono-indicativo-otro');
@@ -857,7 +814,6 @@
             }
         }
 
-        // Función para controlar la visibilidad dinámica del botón de WhatsApp al escribir
         function actualizarVisibilidadWhatsapp() {
             const nombre = document.getElementById('nombre').value.trim();
             const btnWhatsapp = document.getElementById('btn-whatsapp');
@@ -868,7 +824,6 @@
             }
         }
 
-        // Abrir modal de detalles del participante
         function abrirModal(num) {
             const rifa = getRifaActiva();
             const data = rifa.data[num] || { nombre: "", telefono: "", direccion: "", pagado: false, reservado: false };
@@ -879,14 +834,12 @@
             document.getElementById('direccion').value = data.direccion || "";
             document.getElementById('pagado').checked = data.pagado || false;
             
-            // Parsear el teléfono guardado y su indicativo de manera inteligente
             let telGuardado = data.telefono || "";
             const indicativoSel = document.getElementById('telefono-indicativo');
             const indicativoOtro = document.getElementById('telefono-indicativo-otro');
             const inputTel = document.getElementById('telefono');
             
             if (telGuardado.startsWith("+")) {
-                // El número ya tiene formato internacional con prefijo
                 const opciones = Array.from(indicativoSel.options).map(o => o.value);
                 let coincidencia = "";
                 for (let op of opciones) {
@@ -902,7 +855,6 @@
                     indicativoOtro.classList.add('hidden');
                     inputTel.value = telGuardado.substring(coincidencia.length).trim();
                 } else {
-                    // Es un indicativo personalizado de otro país
                     indicativoSel.value = "otro";
                     indicativoOtro.classList.remove('hidden');
                     const match = telGuardado.match(/^\+(\d+)/);
@@ -916,13 +868,11 @@
                     }
                 }
             } else {
-                // Si no tiene prefijo, es formato viejo (asumimos Aruba +297 de manera retrocompatible)
                 indicativoSel.value = "+297";
                 indicativoOtro.classList.add('hidden');
                 inputTel.value = telGuardado;
             }
             
-            // Mostrar botón de WhatsApp solo si ya tiene un nombre asignado
             const btnWhatsapp = document.getElementById('btn-whatsapp');
             if (data.reservado && data.nombre.trim() !== "") {
                 btnWhatsapp.classList.remove('hidden');
@@ -940,13 +890,11 @@
             document.getElementById('myModal').classList.add('hidden');
         }
 
-        // Guardar cambios del comprador
         async function guardarDatos() {
             const rifa = getRifaActiva();
             const num = document.getElementById('current-number').value;
             const nombre = document.getElementById('nombre').value.trim();
             
-            // Obtener el teléfono completo con su respectivo indicativo
             const selectIndicativo = document.getElementById('telefono-indicativo').value;
             const inputOtro = document.getElementById('telefono-indicativo-otro').value.trim();
             const inputTel = document.getElementById('telefono').value.trim();
@@ -961,7 +909,6 @@
                 return;
             }
 
-            // Construir teléfono con su indicativo
             let prefijo = selectIndicativo;
             if (selectIndicativo === "otro") {
                 prefijo = inputOtro.startsWith("+") ? inputOtro : "+" + inputOtro;
@@ -984,7 +931,6 @@
             cerrarModal();
             showToast(`Número ${num} guardado con éxito 💵`, "success");
 
-            // Subir automáticamente a la nube si tiene código
             if (rifa.syncCode && rifa.syncCode.trim() !== "") {
                 actualizarBarraSincronizacion("syncing");
                 await subirEstadoNube();
@@ -992,7 +938,6 @@
             }
         }
 
-        // Llamar confirmación de liberación
         function confirmarLiberarNumero() {
             const num = document.getElementById('current-number').value;
             mostrarConfirmacion(
@@ -1005,10 +950,9 @@
             );
         }
 
-        // Borrar el registro de un número
         async function ejecutarLiberacion(num) {
             const rifa = getRifaActiva();
-            delete rifa.data[num]; // Eliminar llave completamente para no consumir espacio
+            delete rifa.data[num]; 
             
             guardarLocalmente();
             renderGrid();
@@ -1022,7 +966,6 @@
             }
         }
 
-        // Enviar recibo por WhatsApp guardando automáticamente los cambios vigentes
         async function enviarWhatsApp() {
             const rifa = getRifaActiva();
             const num = document.getElementById('current-number').value;
@@ -1040,7 +983,6 @@
                 return;
             }
 
-            // Construir el prefijo internacional
             let prefijo = selectIndicativo;
             if (selectIndicativo === "otro") {
                 prefijo = inputOtro.startsWith("+") ? inputOtro : "+" + inputOtro;
@@ -1049,7 +991,6 @@
             let telLimpioInput = inputTel.replace(/[^0-9]/g, '');
             let telefonoCompleto = telLimpioInput !== "" ? (prefijo + telLimpioInput) : "";
 
-            // Guardar cambios automáticamente antes de enviar para evitar enviar datos antiguos
             rifa.data[num] = {
                 nombre: nombre,
                 telefono: telefonoCompleto,
@@ -1065,7 +1006,6 @@
             const cur = rifa.currency || "Afl.";
             const lot = rifa.lottery || "Catochi Nocturno (Lotto Aruba)";
             
-            // Construcción del mensaje exclusivo con emojis de billetes
             let texto = `💵💵💵 RECIBO DE RIFA DIGITAL 💵💵💵\n\n`;
             texto += `💵 Participante: *${nombre}*\n`;
             texto += `💵 Número reservado: *${num}*\n`;
@@ -1087,17 +1027,14 @@
             
             texto += `💵💵💵 ¡Gracias por participar! 💵💵💵`;
 
-            // Formateo del teléfono para el link
             let telLimpio = telefonoCompleto.replace(/\D/g, ''); 
             
-            // Si el número tiene 7 dígitos (formato estándar de Aruba), anexar el prefijo 297
             if (telLimpio.length === 7) {
                 telLimpio = "297" + telLimpio;
             }
 
             const mensajeCodificado = encodeURIComponent(texto);
             
-            // Abrir WhatsApp con el número del cliente
             if (telLimpio.trim() !== "") {
                 window.open(`https://wa.me/${telLimpio}?text=${mensajeCodificado}`, '_blank');
             } else {
@@ -1106,7 +1043,6 @@
 
             cerrarModal();
 
-            // Subir a la nube en segundo plano
             if (rifa.syncCode && rifa.syncCode.trim() !== "") {
                 actualizarBarraSincronizacion("syncing");
                 await subirEstadoNube();
@@ -1114,7 +1050,6 @@
             }
         }
 
-        // Abrir Ajustes de Rifa
         function abrirAjustes() {
             const rifa = getRifaActiva();
             document.getElementById('settings-title').value = rifa.title;
@@ -1132,7 +1067,6 @@
             document.getElementById('settingsModal').classList.add('hidden');
         }
 
-        // Guardar ajustes principales de la rifa activa
         async function guardarAjustes() {
             const rifa = getRifaActiva();
             const nuevoTitulo = document.getElementById('settings-title').value.trim();
@@ -1146,7 +1080,6 @@
             const cambioDeCodigo = (rifa.syncCode !== nuevoCodigo);
             const cambioDeTamaño = (rifa.size !== nuevoTamaño);
 
-            // Si cambia el tamaño, confirmar antes de modificar para evitar pérdidas accidentales
             if (cambioDeTamaño) {
                 mostrarConfirmacion(
                     "¿Cambiar tamaño de rifa?",
@@ -1161,18 +1094,15 @@
             }
         }
 
-        // Aplicar los ajustes guardados de la rifa adaptando dinámicamente los tamaños
         async function ejecutarCambioAjustes(nuevoTamaño, nuevoTitulo, nuevoPrecio, nuevoPremio, nuevoCodigo, nuevaLoteria, nuevaMoneda, cambioDeCodigo) {
             const rifa = getRifaActiva();
 
-            // Adaptar estructura si cambió de tamaño
             if (rifa.size !== nuevoTamaño) {
                 const viejoData = rifa.data;
                 rifa.size = nuevoTamaño;
-                rifa.data = crearTableroVacio(nuevoTamaño); // {}
+                rifa.data = crearTableroVacio(nuevoTamaño);
                 const newPadLen = nuevoTamaño === 1000 ? 3 : 2;
                 
-                // Traspasar únicamente las llaves que quepan en el nuevo rango
                 Object.keys(viejoData).forEach(k => {
                     const intVal = parseInt(k, 10);
                     if (!isNaN(intVal) && intVal < nuevoTamaño) {
@@ -1197,7 +1127,7 @@
 
             if (cambioDeCodigo) {
                 if (nuevoCodigo !== "") {
-                    showToast(`Conectando con código de nube: ${nuevoCodigo} 💵`, "info");
+                    showToast(`Conectando con código de Firebase: ${nuevoCodigo} 💵`, "info");
                     sincronizarConNube();
                 } else {
                     actualizarBarraSincronizacion("local");
@@ -1210,7 +1140,6 @@
             }
         }
 
-        // Actualiza el texto de cabecera dinámicamente
         function actualizarVistaEncabezado() {
             const rifa = getRifaActiva();
             const cur = rifa.currency || "Afl.";
@@ -1220,18 +1149,15 @@
             document.getElementById('header-prize').innerText = `Premio: ${cur} ${rifa.prize} Cash 💵`;
         }
 
-        // Abrir panel administrador de múltiples rifas
         function abrirManagerRifas() {
             actualizarListaManagerRifas();
             document.getElementById('managerModal').classList.remove('hidden');
         }
 
-        // Cerrar panel de gestor de rifas
         function cerrarManagerRifas() {
             document.getElementById('managerModal').classList.add('hidden');
         }
 
-        // Renderiza el listado de rifas activas en el modal
         function actualizarListaManagerRifas() {
             const list = document.getElementById('raffles-list');
             list.innerHTML = '';
@@ -1240,7 +1166,6 @@
                 const rifa = appState.raffles[id];
                 const activeClass = (id === appState.currentRaffleId) ? "border-blue-500 bg-blue-50/60" : "border-slate-100 hover:bg-slate-50";
                 
-                // Contar estadísticas de forma ultra eficiente
                 let pagados = 0;
                 let total = rifa.size;
                 Object.keys(rifa.data).forEach(k => {
@@ -1268,7 +1193,6 @@
             });
         }
 
-        // Cambiar la rifa que se está controlando actualmente
         function cambiarRifaActiva(id) {
             if (appState.raffles[id]) {
                 appState.currentRaffleId = id;
@@ -1286,7 +1210,6 @@
             }
         }
 
-        // Crear una nueva rifa desde el administrador
         function crearNuevaRifa() {
             const titleInput = document.getElementById('new-raffle-title');
             const sizeInput = document.getElementById('new-raffle-size');
@@ -1316,7 +1239,6 @@
                 data: crearTableroVacio(size)
             };
 
-            // Cambiar automáticamente a la nueva rifa
             appState.currentRaffleId = newId;
             pageStart = 0;
             currentSearchQuery = "";
@@ -1329,12 +1251,10 @@
             showToast(`¡Rifa "${title}" creada con éxito! 💵`, "success");
         }
 
-        // Llamar confirmación de eliminación de una rifa entera
         function confirmarEliminarRifa(id) {
             const rifa = appState.raffles[id];
             if (!rifa) return;
 
-            // Evitar eliminar la última rifa disponible para no romper la app
             if (Object.keys(appState.raffles).length <= 1) {
                 showToast("No puedes eliminar tu única rifa activa 💸", "error");
                 return;
@@ -1350,11 +1270,9 @@
             );
         }
 
-        // Eliminar físicamente una rifa
         function ejecutarEliminacionRifa(id) {
             delete appState.raffles[id];
             
-            // Si eliminamos la actual, cambiar a otra
             if (appState.currentRaffleId === id) {
                 appState.currentRaffleId = Object.keys(appState.raffles)[0];
             }
@@ -1369,13 +1287,11 @@
             showToast("Rifa eliminada correctamente 💸", "info");
         }
 
-        // Mostrar modal personalizado de confirmación
         function mostrarConfirmacion(title, text, onYesCallback) {
             document.getElementById('confirm-title').innerText = title;
             document.getElementById('confirm-text').innerText = text;
             
             const yesBtn = document.getElementById('confirm-yes-btn');
-            // Reemplazar botón para remover listeners antiguos
             const clone = yesBtn.cloneNode(true);
             yesBtn.parentNode.replaceChild(clone, yesBtn);
             
@@ -1388,7 +1304,6 @@
             document.getElementById('confirmModal').classList.add('hidden');
         }
 
-        // Toasts Modernos
         function showToast(message, type = "success") {
             const container = document.getElementById('toast-container');
             
@@ -1420,7 +1335,6 @@
             }, 4000);
         }
 
-        // Control visual de la barra de sincronización
         function actualizarBarraSincronizacion(state) {
             const ping = document.getElementById('sync-ping');
             const dot = document.getElementById('sync-dot');
@@ -1436,24 +1350,23 @@
             } else if (state === "syncing") {
                 ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75";
                 dot.className = "relative inline-flex rounded-full h-3.5 w-3.5 bg-blue-500";
-                text.innerText = "Sincronizando con la nube... 💸";
+                text.innerText = "Sincronizando con tu Firebase... 💸";
                 btnSync.classList.remove('hidden');
             } else if (state === "connected") {
                 ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
                 dot.className = "relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500";
-                text.innerHTML = `Nube Activa 💵 Código: <span class="font-mono bg-white px-1.5 py-0.5 rounded border text-xs text-emerald-700 font-bold">${rifa.syncCode}</span>`;
+                text.innerHTML = `Firebase Activo 🟢 Código: <span class="font-mono bg-white px-1.5 py-0.5 rounded border text-xs text-emerald-700 font-bold">${rifa.syncCode}</span>`;
                 btnSync.classList.remove('hidden');
             } else if (state === "error") {
                 ping.className = "hidden";
                 dot.className = "relative inline-flex rounded-full h-3.5 w-3.5 bg-orange-500";
-                text.innerText = "Error de conexión temporal con la nube 💸";
+                text.innerText = "Error temporal con Firebase 💸";
                 btnSync.classList.remove('hidden');
             }
         }
 
-        /* ==================== FUNCIONES DE GENERACIÓN DE CAPTURA ==================== */
         async function generarCapturaTablero() {
-            // Mostrar modal y Loader
+            // Mostrar modal de carga
             document.getElementById('sharePreviewModal').classList.remove('hidden');
             document.getElementById('img-preview-loader').classList.remove('hidden');
             document.getElementById('share-image-preview').classList.add('hidden');
@@ -1462,11 +1375,11 @@
             const size = rifa.size;
             const padLen = size === 1000 ? 3 : 2;
 
-            // Generar la grilla optimizada
+            // Renderizar la grilla de números de forma exclusiva en el contenedor oculto
             const captureGrid = document.getElementById('capture-grid');
             captureGrid.innerHTML = '';
 
-            // Clases de grilla responsiva adaptativa para la captura
+            // Configurar columnas de forma auto-ajustable según tamaño
             captureGrid.className = 'grid gap-1.5 justify-center';
             if (size <= 50) {
                 captureGrid.classList.add('grid-cols-5');
@@ -1489,37 +1402,37 @@
                     cell.className += ' text-sm w-[44px] h-[44px]';
                 }
 
+                // Aplicar colores de alta visibilidad para estados de WhatsApp
                 if (data.pagado) {
-                    cell.className += ' bg-emerald-500 text-white border-emerald-600';
+                    cell.className += ' bg-emerald-500 text-white border-emerald-600 shadow-lg';
                     cell.innerText = num;
                 } else if (data.reservado) {
-                    cell.className += ' bg-orange-400 text-white border-orange-500';
+                    cell.className += ' bg-orange-400 text-white border-orange-500 shadow-lg';
                     cell.innerText = num;
                 } else {
+                    // Libre: elegante gris oscuro translúcido en fondo negro
                     cell.className += ' bg-slate-800 text-slate-400 border-slate-700/60';
                     cell.innerText = num;
                 }
                 captureGrid.appendChild(cell);
             }
 
-            // Forzar espera para renderizado CSS y llamar html2canvas
+            // Pequeña espera para asegurar que el navegador renderice la grilla oculta
             setTimeout(async () => {
                 try {
                     const canvas = await html2canvas(document.getElementById('capture-area'), {
-                        scale: 2.2, // Mayor calidad para evitar pixelado en WhatsApp
+                        scale: 2.5, // Ultra alta resolución para evitar pixelado en celulares
                         useCORS: true,
-                        backgroundColor: '#020617'
+                        backgroundColor: '#0f172a' // Slate-900 elegante
                     });
                     
                     const base64image = canvas.toDataURL("image/png");
                     const imgPreview = document.getElementById('share-image-preview');
                     imgPreview.src = base64image;
                     
-                    // Ocultar loader y mostrar imagen
                     document.getElementById('img-preview-loader').classList.add('hidden');
                     imgPreview.classList.remove('hidden');
 
-                    // Mostrar botón nativo si se puede compartir
                     const response = await fetch(base64image);
                     const blob = await response.blob();
                     const file = new File([blob], "tablero-rifa.png", { type: "image/png" });
@@ -1532,10 +1445,10 @@
                     }
                 } catch (err) {
                     console.error("Error al generar flyer:", err);
-                    showToast("Error al generar la imagen. Inténtalo de nuevo.", "error");
+                    showToast("Error al generar el flyer. Inténtalo de nuevo.", "error");
                     cerrarSharePreviewModal();
                 }
-            }, 300);
+            }, 350);
         }
 
         function cerrarSharePreviewModal() {
@@ -1554,7 +1467,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("¡Imagen guardada con éxito en tu dispositivo! 📥", "success");
+            showToast("¡Imagen de alta calidad guardada en tu galería! 📥", "success");
         }
 
         async function compartirImagenGenerada() {
@@ -1569,26 +1482,22 @@
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         files: [file],
-                        title: 'Tablero de Rifa Activo',
-                        text: '¡Escríbeme para reservar tu número de la suerte antes de que se agoten! 🍀'
+                        title: 'Tablero de mi Rifa en vivo 🍀',
+                        text: '¡Escríbeme para apartar tu número de la suerte antes de que se agoten! 💵'
                     });
                 } else {
                     descargarImagenGenerada();
                 }
             } catch (err) {
-                console.error("Error al compartir imagen:", err);
+                console.error("Error al compartir imagen nativamente:", err);
                 descargarImagenGenerada();
             }
         }
-        /* ==================== FIN FUNCIONES DE CAPTURA ==================== */
 
-        // Ejecutar al cargar la página
+        // Inicio en la carga del sitio
         window.onload = function() {
             inicializarDatos();
             renderGrid();
-            
-            // Ya no usamos sincronización manual obligada cada 15 segundos. 
-            // La nube ahora se conecta automáticamente y reacciona en tiempo real.
         };
     </script>
 </body>
